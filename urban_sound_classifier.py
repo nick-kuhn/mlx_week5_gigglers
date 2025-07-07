@@ -1,9 +1,34 @@
+### try to classify sounds into 10 classes
+# using both the CNN and transformers
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.utils.data import DataLoader
 from torchvision import datasets, transforms
 import matplotlib.pyplot as plt
+
+
+# 1. load in the dataset
+from datasets import load_dataset
+
+ds = load_dataset("danavery/urbansound8K")
+
+# 2. get the power spectrum for each audio file --> get the image of sounds
+
+
+
+# 3. using these sound images as input for the classifers
+
+
+
+
+
+
+
+
+
+
+
 
 # Set random seed for reproducibility
 torch.manual_seed(42)
