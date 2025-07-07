@@ -4,4 +4,33 @@ version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.10"
-dependencies = []
+dependencies = [
+  "torch",
+  "pyarrow",
+  "torchvision",
+  "datasets",
+  "tqdm",
+  "wandb",
+  "colorama",
+  "pandas",
+  "python-dotenv",
+  "fastapi",
+  "uvicorn",
+  "numpy",
+  "ipykernel",
+  "accelerate",
+  "bitsandbytes",
+  "torchaudio",
+  "librosa>=0.10",
+  "soundfile",
+  "matplotlib>=3.10.3",
+  "seaborn>=0.13.2",
+  "scikit-learn>=1.7.0",
+  "hdbscan>=0.8.40",
+  "scipy>=1.10,<1.13",
+  "transformers>=4.39",
+  "ipywidgets>=7.6.5",
+  "kaggle>=1.6.6",
+  "kagglehub",
+  "librosa"
+]

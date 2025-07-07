@@ -5,23 +5,66 @@ from torch.utils.data import DataLoader
 import torch
 import torch.nn as nn
 import numpy as np
-
+import librosa
+import tqdm
+import matplotlib.pyplot as plt
 
 ### 1. load in the dataset
 ds = load_dataset("danavery/urbansound8K") #no need to shuffle the dataset as indicated on the huggdsingface, 10-fold cross-validation by default
 
-### 2. pre-processing the dataset 
-# down-sampling the audio file and get corresponding power spectrum --> get the image of sounds
-sample_rate = 16000
-def audio_to_spectrum(audio_array, sample_rate):
+### 2. pre-processing the dataset; get corresponding power spectrum --> get the images of sound
+def audio_to_spectrum(audio_array, orig_sr, target_sr=16000, n_mels=64, n_fft=1024, hop_length=512, target_duration = 4):
+    # ensure float32
+    audio_array = audio_array.astype(np.float32)
     # first downsample the audio
-
+    if orig_sr != target_sr:
+        audio_array = librosa.resample(audio_array, orig_sr=orig_sr, target_sr=target_sr)
+    # zero-padding or truncate to a fixed length of 4s
+    target_len = int(target_sr * target_duration)
+    if len(audio_array) < target_len:
+        audio_array = np.pad(audio_array, (0, target_len - len(audio_array)), mode='constant')
+    else:
+        audio_array = audio_array[:target_len]
     # then run the fft
-    
+    mel_spec = librosa.feature.melspectrogram(
+        y=audio_array, 
+        sr=target_sr,
+        n_fft=n_fft,
+        hop_length=hop_length,
+        n_mels=n_mels
+    )
+    # convert to log scale (dB)
+    log_mel_spec = librosa.power_to_db(mel_spec, ref=np.max)
+    return log_mel_spec
+
+# Preprocess and store all power spectra
+power_spectra = []
+labels = []
+folds = []
+for example in tqdm(ds['train']):
+    audio = example['audio']['array']
+    sr = example['audio']['sampling_rate']
+    spectrum = audio_to_spectrum(audio, sr)
+    power_spectra.append(spectrum)
+    labels.append(example['class'])
+    folds.append(example['fold'])
+
+
+### have a peek of a random power spectrogram
+i = 0
+plt.figure(figsize=(10,4))
+plt.imshow(power_spectra[i], scpect='auto', origin='lower', cmap='hot')
+plt.title(f'Log-Mel Spectrogram -- class: {labels[i]}')
+plt.xlabel('Time Frames')
+plt.ylabel('Mel Bands')
+plt.tight_layout()
+plt.show()
+
 
 
 ### 3. using these sound images as input for the classifers
 # 3.1 transformer encoder
+
 # Define the neural network architecture
 class ViT(nn.Module):
     def __init__(self,img_width,img_channels,patch_size,embed_dim,num_heads,num_layers,num_classes,ff_dim):
