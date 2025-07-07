@@ -1,37 +1,27 @@
 ### try to classify sounds into 10 classes
 # using both the CNN and transformers
+from datasets import load_dataset
+from torch.utils.data import DataLoader
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
-from torch.utils.data import DataLoader
-from torchvision import datasets, transforms
-import matplotlib.pyplot as plt
+import numpy as np
 
 
-# 1. load in the dataset
-from datasets import load_dataset
+### 1. load in the dataset
+ds = load_dataset("danavery/urbansound8K") #no need to shuffle the dataset as indicated on the huggdsingface, 10-fold cross-validation by default
 
-ds = load_dataset("danavery/urbansound8K")
+### 2. pre-processing the dataset 
+# down-sampling the audio file and get corresponding power spectrum --> get the image of sounds
+sample_rate = 16000
+def audio_to_spectrum(audio_array, sample_rate):
+    # first downsample the audio
 
-# 2. get the power spectrum for each audio file --> get the image of sounds
-
-
-
-# 3. using these sound images as input for the classifers
-
-
-
+    # then run the fft
+    
 
 
-
-
-
-
-
-
-
-# Set random seed for reproducibility
-torch.manual_seed(42)
+### 3. using these sound images as input for the classifers
+# 3.1 transformer encoder
 # Define the neural network architecture
 class ViT(nn.Module):
     def __init__(self,img_width,img_channels,patch_size,embed_dim,num_heads,num_layers,num_classes,ff_dim):
