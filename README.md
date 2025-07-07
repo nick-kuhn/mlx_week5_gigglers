@@ -95,3 +95,9 @@ The `pyproject.toml` stays committed so everyone sees the same dependency list.
 ---
 
 Happy coding! 🚀
+
+### To dp:
+- cnn
+- transformer
+- cnn transformer
+- ensemble
