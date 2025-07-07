@@ -1,3 +1,10 @@
+# Our additional ignores
+.venv/
+.env
+uv.lock
+data/
+
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
