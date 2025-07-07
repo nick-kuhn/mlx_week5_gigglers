@@ -32,5 +32,6 @@ dependencies = [
   "ipywidgets>=7.6.5",
   "kaggle>=1.6.6",
   "kagglehub",
-  "librosa"
+  "librosa",
+  "scikit-learn",
 ]

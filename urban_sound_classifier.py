@@ -6,14 +6,15 @@ import torch
 import torch.nn as nn
 import numpy as np
 import librosa
-import tqdm
+from tqdm import tqdm
 import matplotlib.pyplot as plt
+from sklearn.model_selection import KFold
 
 ### 1. load in the dataset
 ds = load_dataset("danavery/urbansound8K") #no need to shuffle the dataset as indicated on the huggdsingface, 10-fold cross-validation by default
 
 ### 2. pre-processing the dataset; get corresponding power spectrum --> get the images of sound
-def audio_to_spectrum(audio_array, orig_sr, target_sr=16000, n_mels=64, n_fft=1024, hop_length=512, target_duration = 4):
+def audio_to_spectrum(audio_array, orig_sr, target_sr=16000, n_mels=128, n_fft=1024, hop_length=512, target_duration = 4):
     # ensure float32
     audio_array = audio_array.astype(np.float32)
     # first downsample the audio
@@ -50,21 +51,20 @@ for example in tqdm(ds['train']):
     folds.append(example['fold'])
 
 
-### have a peek of a random power spectrogram
-i = 0
-plt.figure(figsize=(10,4))
-plt.imshow(power_spectra[i], scpect='auto', origin='lower', cmap='hot')
-plt.title(f'Log-Mel Spectrogram -- class: {labels[i]}')
-plt.xlabel('Time Frames')
-plt.ylabel('Mel Bands')
-plt.tight_layout()
-plt.show()
+# ### have a peek of a random power spectrogram
+# i = 0
+# plt.figure(figsize=(10,4))
+# plt.imshow(power_spectra[i], aspect='auto', origin='lower', cmap='hot')
+# plt.title(f'Log-Mel Spectrogram -- class: {labels[i]}')
+# plt.xlabel('Time Frames')
+# plt.ylabel('Mel Bands')
+# plt.tight_layout()
+# plt.show()
 
 
 
 ### 3. using these sound images as input for the classifers
 # 3.1 transformer encoder
-
 # Define the neural network architecture
 class ViT(nn.Module):
     def __init__(self,img_width,img_channels,patch_size,embed_dim,num_heads,num_layers,num_classes,ff_dim):
@@ -228,17 +228,9 @@ def main():
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     print(f'Using device: {device}')
 
-    # Load and preprocess data
-    transform = transforms.Compose([
-        transforms.ToTensor(),
-        transforms.Normalize((0.1307,), (0.3081,))
-    ])
 
-    train_dataset = datasets.MNIST('./data', train=True, download=True, transform=transform)
-    test_dataset = datasets.MNIST('./data', train=False, transform=transform)
-
-    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
-    test_loader = DataLoader(test_dataset, batch_size=1000, shuffle=False)
+    train_loader = DataLoader(power_spectra[:7000], batch_size=batch_size, shuffle=False)
+    test_loader = DataLoader(power_spectra[7001:], batch_size=1000, shuffle=False)
 
     # Initialize model, loss function, and optimizer
     model = ViT(
