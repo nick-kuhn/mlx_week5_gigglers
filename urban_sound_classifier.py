@@ -1,7 +1,7 @@
 ### try to classify sounds into 10 classes
 # using both the CNN and transformers
 from datasets import load_dataset
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, Dataset
 import torch
 import torch.nn as nn
 import numpy as np
@@ -242,7 +242,7 @@ def main():
         num_classes = num_classes,
         num_layers = num_layers,
         ff_dim = ff_dim,
-    ).to(device)
+        ).to(device)
     criterion = nn.CrossEntropyLoss()
     optimizer = torch.optim.Adam(model.parameters(), lr = lr, weight_decay = weight_decay)
 
@@ -254,8 +254,8 @@ def main():
         evaluate_model(model, test_loader, device, patch_size)
 
     # Save the trained model
-    torch.save(model.state_dict(), 'mnist_model.pth')
-    print('Model saved to mnist_model.pth')
+    torch.save(model.state_dict(), 'sound_classifier.pth')
+    print('Model saved to sound_classifier.pth')
 
 if __name__ == '__main__':
     main() 
