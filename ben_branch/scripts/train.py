@@ -100,21 +100,21 @@ def train_and_evaluate():
     db_gpu  = T.AmplitudeToDB(stype='power').to(device)
 
     # training loop
+    val_iter = iter(val_loader)
+
     for epoch in range(1, epochs + 1):
         # ----- training -----
         model.train()
         running_loss, running_corrects, total = 0.0, 0, 0
 
-        for i, (waveforms, labels) in enumerate(tqdm(train_loader, desc=f"Epoch {epoch}", leave=False), 1):
-            # send raw waveforms to GPU
-            waveforms = waveforms.to(device)            # shape [B, T]
-            labels    = labels.to(device)
-     
-            # compute GPU spectrograms
-            specs = mel_gpu(waveforms)                  # [B, n_mels, frames]
-            specs = db_gpu(specs)                       # log-scale in dB
-            specs = specs.unsqueeze(1)                  # [B, 1, n_mels, frames]
-     
+        for i, (waveforms, labels) in enumerate(
+            tqdm(train_loader, desc=f"Epoch {epoch}", leave=False), 1
+        ):
+            waveforms, labels = waveforms.to(device), labels.to(device)
+
+            # ─── forward / backward ───────────────────────────────────────
+            specs = mel_gpu(waveforms)
+            specs = db_gpu(specs).unsqueeze(1)
             optimizer.zero_grad()
             with autocast():
                 outputs = model(specs)
@@ -123,29 +123,56 @@ def train_and_evaluate():
             scaler.step(optimizer)
             scaler.update()
 
-            # accumulate metrics
+            # ─── accumulate train metrics ─────────────────────────────────
             preds = outputs.argmax(dim=1)
             running_loss     += loss.item() * waveforms.size(0)
             if labels.dim() == 1:
                 running_corrects += (preds == labels).sum().item()
+                train_acc = (preds == labels).float().mean().item()
             else:
-                running_corrects += (preds == labels.argmax(dim=1)).sum().item()
-            total  += waveforms.size(0)
+                hard_labels = labels.argmax(dim=1)
+                running_corrects += (preds == hard_labels).sum().item()
+                train_acc       = (preds == hard_labels).float().mean().item()
+            total += waveforms.size(0)
 
-            # log batch metrics every 20 batches
-            if i % 20 == 0:
-                # compute batch‐level accuracy, handling soft/hard labels
-                if labels.dim() == 1:
-                    batch_acc = (preds == labels).float().mean().item()
-                else:
-                    hard_labels = labels.argmax(dim=1)
-                    batch_acc   = (preds == hard_labels).float().mean().item()
+            # ─── every 20 train batches: log train + one-val-batch ───
+            if i % 5 == 0:
+                # grab one batch from val_loader
+                try:
+                    v_wave, v_lab = next(val_iter)
+                except StopIteration:
+                    val_iter = iter(val_loader)
+                    v_wave, v_lab = next(val_iter)
+                v_wave, v_lab = v_wave.to(device), v_lab.to(device)
 
+                with torch.no_grad():
+                    v_spec = db_gpu(mel_gpu(v_wave)).unsqueeze(1)
+                    v_out  = model(v_spec)
+                    v_loss = criterion(v_out, v_lab)
+                    v_pred = v_out.argmax(dim=1)
+
+                    if v_lab.dim() == 1:
+                        v_acc = (v_pred == v_lab).float().mean().item()
+                    else:
+                        hard_v = v_lab.argmax(dim=1)
+                        v_acc  = (v_pred == hard_v).float().mean().item()
+
+                # back to train mode
+                model.train()
+
+                step = (epoch - 1) * len(train_loader) + i
                 wandb.log({
                     "train_loss_batch": loss.item(),
-                    "train_acc_batch": batch_acc
-                }, step=(epoch-1)*len(train_loader) + i)
+                    "train_acc_batch":  train_acc,
+                    "val_loss_batch":   v_loss.item(),
+                    "val_acc_batch":    v_acc,
+                }, step=step)
 
+                print(
+                    f"Step {step} "
+                    f"Train ▶️ loss={loss:.4f} acc={train_acc:.4f} | "
+                    f"Val ▶️ loss={v_loss:.4f} acc={v_acc:.4f}"
+                )
 
         # epoch training metrics
         epoch_loss = running_loss / total
@@ -204,27 +231,30 @@ def train_and_evaluate():
 
 # ─── Sweep launcher using WandB agent ─────────────────────────────────────
 if __name__ == "__main__":
-    # build W&B sweep config from our sweep section in config.yml
-    sweep_cfg = {
-        "method":  "grid",
-        "metric":  {"name": "val_acc", "goal": "maximize"},
+    # ——— Bayesian hyperparam sweep, 10 runs (~8 h) ———
+    bayes_cfg = {
+        "method": "bayes",
+        "metric": {"name": "val_acc", "goal": "maximize"},
         "parameters": {
+            # — tune these five —
             "conv_channels": {"values": swp["model"]["conv_channels"]},
-            "kernel_sizes":  {"values": swp["model"]["kernel_sizes"]},
-            "pool_sizes":    {"values": swp["model"]["pool_sizes"]},
             "mlp_hidden":    {"values": swp["model"]["mlp_hidden"]},
             "dropout":       {"values": swp["model"]["dropout"]},
-            "num_classes":   {"value":  swp["model"]["num_classes"][0]},
-            "n_mels":        {"value":  swp["model"]["n_mels"][0]},
-            "max_frames":    {"value":  swp["model"]["max_frames"][0]},
-            "batch_size":    {"values": swp["training"]["batch_size"]},
             "lr":            {"values": swp["training"]["lr"]},
-            "epochs":        {"value":  swp["training"]["epochs"][0]},
-            "patience":      {"value":  swp["training"]["patience"][0]},
-            "scheduler":     {"values": swp["training"]["scheduler"]}
+            "scheduler":     {"values": swp["training"]["scheduler"]},
+
+            # — fixed params you still read in train_and_evaluate() —
+            "kernel_sizes": {"value": swp["model"]["kernel_sizes"][0]},
+            "pool_sizes":   {"value": swp["model"]["pool_sizes"][0]},
+            "num_classes":  {"value": swp["model"]["num_classes"][0]},
+            "n_mels":       {"value": swp["model"]["n_mels"][0]},
+            "max_frames":   {"value": swp["model"]["max_frames"][0]},
+            "batch_size":   {"value": swp["training"]["batch_size"][0]},
+            "epochs":       {"value": swp["training"]["epochs"][0]},
+            "patience":     {"value": swp["training"]["patience"][0]},
         }
     }
-    # create sweep on W&B
-    sweep_id = wandb.sweep(sweep_cfg, project="urbansound8k")
-    # launch an agent that runs train_and_evaluate() for each combo
-    wandb.agent(sweep_id, function=train_and_evaluate)
+
+    sweep_id = wandb.sweep(bayes_cfg, project="urbansound8k")
+    # run exactly 10 trials (~10×50 min ≃ 8 h20)
+    wandb.agent(sweep_id, function=train_and_evaluate, count=10)
