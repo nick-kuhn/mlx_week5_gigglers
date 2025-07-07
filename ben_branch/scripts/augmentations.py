@@ -12,9 +12,13 @@ import torch
 import librosa
 
 ROOT = Path(__file__).resolve().parent.parent
-cfg = yaml.safe_load(open(ROOT / "config.yml"))
-wf_cfg = cfg["augmentations"]["waveform"]
-sp_cfg = cfg["augmentations"]["spec_masking"]
+cfg  = yaml.safe_load(open(ROOT / "config.yml"))
+defs = cfg["defaults"]
+
+# pull augmentations from defaults
+wf_cfg = defs["augmentations"]["waveform"]
+sp_cfg = defs["augmentations"]["spec_masking"]
+
 
 # waveform augs
 def time_shift(wav: np.ndarray, sr: int):

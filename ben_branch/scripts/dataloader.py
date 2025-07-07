@@ -2,13 +2,7 @@
 """
 dataloader.py
 
-Defines UrbanSoundDataset and DataLoader factory. Expects your preprocessed
-.-wav files organized under WAV_DIR/fold{fold}/ as:
-
-  ben_branch/data/wav_files/
-    ├─ fold1/
-    ├─ fold2/
-    └─ … 
+Defines UrbanSoundDataset and DataLoader factory. 
 Each filename must follow: fsID-classID-occurrenceID-sliceID.wav
 """
 
@@ -25,21 +19,30 @@ from augmentations import (
 )
 import random
 import torch.nn.functional as F
+import torchaudio.transforms as T
 from typing import List, Tuple
 
-# ─── Load configuration ───────────────────────────────────────────────────────
+#  Load configuration 
 ROOT       = Path(__file__).resolve().parent.parent
-cfg        = yaml.safe_load(open(ROOT / "config.yml"))
-PATHS      = cfg["paths"]
-AUDIO      = cfg["audio"]
-PREPROC    = cfg["preprocessing"]
-TRAIN_CFG  = cfg["training"]["folds"]
-AUG_WF     = cfg["augmentations"]["waveform"]
-AUG_SP     = cfg["augmentations"]["spec_masking"]
-MIX_CFG    = AUG_WF.get("mixup", {})
-NUM_CLASSES = cfg.get("model", {}).get("num_classes", 10)
+cfg         = yaml.safe_load(open(ROOT / "config.yml"))
+defs        = cfg["defaults"]                      # everything that isn’t swept
 
-# ─── Constants ────────────────────────────────────────────────────────────────
+# static paths & settings
+PATHS       = defs["paths"]
+AUDIO       = defs["audio"]
+PREPROC     = defs["preprocessing"]
+TRAIN_CFG   = defs["training"]["folds"]
+
+# augmentation defaults
+AUG_WF      = defs["augmentations"]["waveform"]
+AUG_SP      = defs["augmentations"]["spec_masking"]
+MIX_CFG     = AUG_WF.get("mixup", {})
+
+# for mixup one‐hot size; UrbanSound8K always has 10 classes
+NUM_CLASSES = 10
+
+
+#  Constants 
 SR        = AUDIO["target_sampling_rate"]             # target sample rate
 WAV_DIR   = ROOT / PATHS["wav_output"]                # where foldX/ subdirs live
 FIXED_DUR      = AUDIO["fixed_duration"]
@@ -48,7 +51,7 @@ MIX_ALPHA = MIX_CFG.get("alpha", 0.2)                 # mixup Beta dist α
 MIX_PROB  = MIX_CFG.get("prob", 0.0)                  # mixup on/off probability
 
 # pull in n_fft/hop_length from the spectrogram config:
-spec_cfg   = cfg["spectrogram"]
+spec_cfg   = defs["spectrogram"]
 N_FFT      = spec_cfg["n_fft"]
 HOP_LENGTH = spec_cfg["hop_length"]
 
@@ -56,7 +59,8 @@ HOP_LENGTH = spec_cfg["hop_length"]
 MAX_FRAMES = 1 + (TARGET_SAMPLES - N_FFT) // HOP_LENGTH
 
 # Get the arrow metadata for fold mapping
-from datasets import load_from_disk # keep here, don't move to top!
+print("Loading fold metadata from arrow files in data...")
+from datasets import load_from_disk # keep here, don't move to
 
 # after your constants…
 ARROW_DIR = ROOT / PATHS["arrow_train"]
@@ -67,7 +71,7 @@ FOLD_MAP  = {
 }
 
 
-# ─── Dataset ──────────────────────────────────────────────────────────────────
+#  Dataset 
 class UrbanSoundDataset(Dataset):
   """Dataset for UrbanSound8K .wav files with in-memory augmentations."""
   
@@ -79,6 +83,15 @@ class UrbanSoundDataset(Dataset):
     """
     self.train = train
     self.samples = []
+
+    # Use CPU transforms to avoid CUDA context issues in DataLoader workers
+    self.mel_transform = T.MelSpectrogram(
+      sample_rate=SR,
+      n_fft=N_FFT,
+      hop_length=HOP_LENGTH,
+      n_mels=spec_cfg["n_mels"]
+    )
+    self.db_transform = T.AmplitudeToDB()
 
     # flat scan of WAV_DIR
     for wav_path in WAV_DIR.glob("*.wav"):
@@ -105,36 +118,48 @@ class UrbanSoundDataset(Dataset):
     if sr != SR:
       raise ValueError(f"Expected SR={SR}, got {sr}")
     
-    # ── waveform-level augmentations ────────────────────────────────
+    #  waveform-level augmentations 
     if self.train:
       waveform = time_shift(waveform, SR)
       waveform = add_noise(waveform)
       waveform = pitch_shift(waveform, SR)
       waveform = time_stretch(waveform, SR)
     
-    # ── compute log-Mel spectrogram ─────────────────────────────────
-    spec_np = compute_log_mel_spectrogram(waveform, SR)
+    # #  compute CPU log-Mel spectrogram 
+    # wav_t = torch.from_numpy(waveform).float() 
 
-    # ── pad/truncate time axis to fixed MAX_FRAMES ───────────────
-    frames = spec_np.shape[1]
-    if frames < MAX_FRAMES:
-        pad = MAX_FRAMES - frames
-        spec_np = np.pad(spec_np, ((0,0),(0,pad)), mode="constant")
+    # # CPU melspec → [1, n_mels, frames]
+    # spec_t = self.mel_transform(wav_t.unsqueeze(0))  
+    # spec_t = self.db_transform(spec_t)                   # dB scale
+
+    # #  pad/truncate time axis to fixed MAX_FRAMES 
+    # frames = spec_t.shape[-1]
+    # if frames < MAX_FRAMES:
+    #   pad_amt = MAX_FRAMES - frames
+    #   spec_t = F.pad(spec_t, (0, pad_amt))                     # pad time axis
+    # else:
+    #   spec_t = spec_t[:, :, :MAX_FRAMES]
+        
+    # #  spectrogram-level augmentations 
+    # if self.train:
+    #   spec_t = freq_mask(spec_t)
+    #   spec_t = time_mask(spec_t)
+
+    # return spec_t, label
+    wav_t = torch.from_numpy(waveform).float()   # [T]
+    # ─── pad or truncate to fixed length ─────────────────────────
+    if wav_t.size(0) < TARGET_SAMPLES:
+        # pad at end with zeros
+        wav_t = F.pad(wav_t, (0, TARGET_SAMPLES - wav_t.size(0)))
     else:
-        spec_np = spec_np[:, :MAX_FRAMES]
+        # cut off any extra samples
+        wav_t = wav_t[:TARGET_SAMPLES]
+    return wav_t, label
 
-    
-    # ── to tensor (C × H × W) and float32 ───────────────────────────
-    spec = torch.from_numpy(spec_np).unsqueeze(0).float()
-    
-    # ── spectrogram-level augmentations ─────────────────────────────
-    if self.train:
-      spec = freq_mask(spec)
-      spec = time_mask(spec)
 
-    return spec, label
 
-# ─── Collate + MixUp ──────────────────────────────────────────────────────────
+
+#  Collate + MixUp 
 def collate_fn(
     batch: List[Tuple[torch.Tensor,int]]
 ) -> Tuple[torch.Tensor,torch.Tensor]:
@@ -157,7 +182,7 @@ def collate_fn(
 
   return specs_tensor, labels_tensor
 
-# ─── DataLoader Factory ─────────────────────────────────────────────────────
+#  DataLoader Factory 
 def get_dataloader(
     split: str = "train",
     batch_size: int = 16
@@ -172,7 +197,8 @@ def get_dataloader(
     dataset,
     batch_size=batch_size,
     shuffle=(split == "train"),
-    num_workers=PREPROC["num_workers"],
+    num_workers=8,
+    persistent_workers=True,   # keeps workers alive across epochs (PyTorch ≥1.7)
     collate_fn=collate_fn,
     pin_memory=True,
   )

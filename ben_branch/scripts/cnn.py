@@ -8,11 +8,6 @@ from pathlib import Path
 import torch
 import torch.nn as nn
 
-# ─── Load config ─────────────────────────────────────────────────────────────
-ROOT = Path(__file__).resolve().parent.parent
-cfg  = yaml.safe_load(open(ROOT / "config.yml"))
-model_cfg = cfg.get("model", {})
-
 # ─── Model Definition ─────────────────────────────────────────────────────────
 class CNNClassifier(nn.Module):
     """
@@ -26,15 +21,17 @@ class CNNClassifier(nn.Module):
       - dropout: float dropout after pooling and MLP
       - num_classes: number of output classes
     """
-    def __init__(self):
+    def __init__(self, model_cfg: dict):
         super().__init__()
         # read hyperparams
-        chans      = model_cfg.get("conv_channels", [32, 64, 128])
-        kernels    = model_cfg.get("kernel_sizes", [[3,3]] * len(chans))
-        pools      = model_cfg.get("pool_sizes",   [[2,2]] * len(chans))
-        mlp_hidden = model_cfg.get("mlp_hidden",   [256])
-        dropout    = model_cfg.get("dropout",      0.3)
-        num_classes= model_cfg.get("num_classes",  10)
+        chans      = model_cfg["conv_channels"]
+        kernels    = model_cfg["kernel_sizes"]
+        pools      = model_cfg["pool_sizes"]
+        mlp_hidden = model_cfg["mlp_hidden"]
+        dropout    = model_cfg["dropout"]
+        num_classes= model_cfg["num_classes"]
+        n_mels     = model_cfg["n_mels"]
+        max_frames = model_cfg["max_frames"]
 
         # build convolutional blocks
         layers = []
