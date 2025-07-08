@@ -4,6 +4,8 @@
 uv.lock
 data/
 wandb/
+*.pt*
+*.pth*
 
 
 # Byte-compiled / optimized / DLL files
