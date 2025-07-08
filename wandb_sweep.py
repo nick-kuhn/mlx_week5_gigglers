@@ -102,16 +102,13 @@ def train():
         wandb.summary["best_val_accuracy"] = val_accuracy
 
 
-# ---------------------- Sweep launcher ----------------------
+# ---------------------- Entry point ----------------------
 
-def main():
-    """Create a sweep on W&B and launch an agent that runs locally."""
-    # You can set WANDB_PROJECT and WANDB_ENTITY env vars for nicer grouping.
-    project = os.environ.get("WANDB_PROJECT", "UrbanSound8K")
-    sweep_id = wandb.sweep(sweep_config, project=project)
-    print(f"Created sweep: {sweep_id}. Running agent…")
-    wandb.agent(sweep_id, function=train)
+# When `wandb agent <sweep-id>` launches this script, it just needs to run a
+# single training job.  Therefore we simply call `train()` here.  If you run
+# the file manually (e.g. `python wandb_sweep.py`) it will also execute one
+# training run with whatever values are in the YAML's `parameters` defaults.
 
 
 if __name__ == "__main__":
-    main() 
+    train() 
