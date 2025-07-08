@@ -6,6 +6,7 @@ data/
 wandb/
 *.pt
 *.pth
+no_track/
 
 
 # Byte-compiled / optimized / DLL files
