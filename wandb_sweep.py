@@ -4,6 +4,7 @@ from datetime import datetime
 
 import torch
 import wandb
+import yaml
 from torch.utils.data import DataLoader
 
 from dataset import UrbanSoundsDataset, urban_sounds_collate_fn
@@ -11,34 +12,10 @@ from models import ConvNet, ConvNetConfig, SoundEncoder, EncoderConfig
 
 
 # ---------------------- Sweep configuration ----------------------
-# We create *two* sub-grids: one for ConvNet, one for SoundEncoder.
-# WandB "grid" method will enumerate every combination inside each grid.
-# The two grids are merged here; a `model_type` flag tells the train()
-# function which parameters matter.
-sweep_config = {
-    "name": "urban_sound8k_audio_models",
-    "method": "grid",
-    "metric": {"name": "val_accuracy", "goal": "maximize"},
-    "parameters": {
-        # shared
-        "model_type": {"values": ["ConvNet", "SoundEncoder"]},
-        "lr": {"values": [1e-3, 5e-4]},
-        "epochs": {"value": 10},
-        # ConvNet-specific
-        "base_channels": {"values": [32, 64]},
-        "kernel_size": {"values": [3, 5]},
-        "pool_type": {"values": ["max", "avg"]},
-        "pool_kernel": {"values": [(2, 2), (2, 1)]},
-        "num_conv_blocks": {"value": 3},
-        "classification_dropout": {"value": 0.5},
-        # SoundEncoder-specific
-        "n_layers": {"values": [2, 4]},
-        "n_heads": {"values": [4, 8]},
-        "embed_dim": {"values": [128, 256]},
-        "kq_dim": {"values": [512, 1024]},
-        "max_seq_len": {"value": 64},
-    },
-}
+# Configuration is now kept in `sweep.yaml` for easier editing and CLI use.
+SWEEP_YAML_PATH = os.path.join(os.path.dirname(__file__), "sweep.yaml")
+with open(SWEEP_YAML_PATH, "r") as _f:
+    sweep_config = yaml.safe_load(_f)
 
 
 # ---------------------- Training routine ----------------------

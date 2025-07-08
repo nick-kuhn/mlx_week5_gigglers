@@ -1,0 +1,39 @@
+name: urban_sound8k_audio_models
+method: grid
+metric:
+  name: val_accuracy
+  goal: maximize
+parameters:
+  # shared
+  model_type:
+    values: [ConvNet, SoundEncoder]
+  lr:
+    values: [0.001, 0.0005]
+  epochs:
+    value: 10
+  # ConvNet-specific
+  base_channels:
+    values: [32, 64]
+  kernel_size:
+    values: [3, 5]
+  pool_type:
+    values: [max, avg]
+  pool_kernel:
+    values:
+      - [2, 2]
+      - [2, 1]
+  num_conv_blocks:
+    value: 3
+  classification_dropout:
+    value: 0.5
+  # SoundEncoder-specific
+  n_layers:
+    values: [2, 4]
+  n_heads:
+    values: [4, 8]
+  embed_dim:
+    values: [128, 256]
+  kq_dim:
+    values: [512, 1024]
+  max_seq_len:
+    value: 64 
