@@ -60,6 +60,6 @@ sweep:
   training:
     batch_size:     [64]
     lr:             [1e-3, 5e-4]
-    epochs:         [50]
+    epochs:         [20]
     patience:       [5]
     scheduler:      ["cosine", "step"]

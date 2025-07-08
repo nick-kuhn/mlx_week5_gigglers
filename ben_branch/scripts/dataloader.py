@@ -172,13 +172,13 @@ def collate_fn(
   labels_tensor = torch.tensor(labels)       # shape: (B,)
 
   # apply MixUp if configured
-  if MIX_PROB > 0 and random.random() < MIX_PROB:
-    idx = torch.randperm(specs_tensor.size(0))
-    lam = np.random.beta(MIX_ALPHA, MIX_ALPHA)
-    specs_tensor = lam * specs_tensor + (1 - lam) * specs_tensor[idx]
-    y1 = F.one_hot(labels_tensor, NUM_CLASSES).float()
-    y2 = y1[idx]
-    labels_tensor = lam * y1 + (1 - lam) * y2  # soft labels
+  # if MIX_PROB > 0 and random.random() < MIX_PROB:
+  #   idx = torch.randperm(specs_tensor.size(0))
+  #   lam = np.random.beta(MIX_ALPHA, MIX_ALPHA)
+  #   specs_tensor = lam * specs_tensor + (1 - lam) * specs_tensor[idx]
+  #   y1 = F.one_hot(labels_tensor, NUM_CLASSES).float()
+  #   y2 = y1[idx]
+  #   labels_tensor = lam * y1 + (1 - lam) * y2  # soft labels
 
   return specs_tensor, labels_tensor
 
