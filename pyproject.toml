@@ -6,13 +6,17 @@ readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
     "datasets>=3.6.0",
+    "huggingface-hub[hf-xet]>=0.33.2",
     "ipynb>=0.5.1",
     "ipywidgets>=8.1.7",
     "jupyter>=1.1.1",
     "librosa>=0.11.0",
     "matplotlib>=3.10.3",
+    "openai-whisper>=20250625",
     "sounddevice>=0.5.2",
     "torch>=2.7.1",
     "torchaudio>=2.7.1",
+    "torchviz>=0.0.3",
+    "transformers>=4.53.1",
     "wandb>=0.21.0",
 ]
