@@ -1,5 +1,11 @@
 name: urban_sound8k_audio_models
-program: wandb_sweep.py 
+program: wandb_sweep.py
+command:
+  - ${env}
+  - uv
+  - run
+  - ${program}
+  - ${args}
 method: grid
 metric:
   name: val_accuracy
