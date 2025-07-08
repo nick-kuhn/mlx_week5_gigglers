@@ -9,16 +9,17 @@ It provides more control over the sweep process compared to the CLI-based approa
 import wandb
 import os
 
-from urban_sound_classifier import TrainingHyperparameters
-from urban_sound_classifier import ModelHyperparameters
-from urban_sound_classifier import train_model
+from urban_sound_classifier import TrainingHyperparameters, ModelHyperparameters, train_model, SpectrogramDataset
 
 # Sweep configuration - equivalent to wandb_sweep.yaml but in Python
 SWEEP_CONFIG = {
     'method': 'bayes',  # Can be 'grid', 'random', or 'bayes'
+    # 'metric': [
+    #     {'name': 'Test Accuracy', 'goal': 'maximize'},        
+    #     {'name': 'Test F1 Score (macro)', 'goal': 'maximize'}
+    # ],
     'metric': {
-        'name': 'Test Accuracy', 'Test F1 Score (macro)'
-        'goal': 'maximize'
+        'name': 'Test Accuracy', 'goal': 'maximize'
     },
     'parameters': {
         'num_epochs':{
@@ -89,11 +90,11 @@ def train_sweep_run():
 
         device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-        # Data
-        train_dataset = Combine(train=True)
-        test_dataset = Combine(train=False)
-        train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=train_cfg.batch_size, shuffle=True)
-        test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=1000, shuffle=False)
+        # get the dataset
+        train_dataset = SpectrogramDataset([power_spectra[i] for i in train_indices], [labels[i] for i in train_indices], class_names=[class_names[i] for i in train_indices])
+        val_dataset = SpectrogramDataset([power_spectra[i] for i in val_indices], [labels[i] for i in val_indices], class_names=[class_names[i] for i in val_indices])
+        train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+        val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
 
         # Update model_cfg with dataset info
         tmp = next(iter(train_dataset))
