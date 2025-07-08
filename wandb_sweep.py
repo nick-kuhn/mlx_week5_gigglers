@@ -53,7 +53,7 @@ def train():
 
         # Datasets & loaders (cached by datasets library, so OK per-run)
         train_ds = UrbanSoundsDataset(split="train")
-        val_ds = UrbanSoundsDataset(split="test")
+        val_ds = UrbanSoundsDataset(split="validation")
         train_loader = DataLoader(train_ds, batch_size=32, shuffle=True, collate_fn=urban_sounds_collate_fn)
         val_loader = DataLoader(val_ds, batch_size=32, shuffle=False, collate_fn=urban_sounds_collate_fn)
 
