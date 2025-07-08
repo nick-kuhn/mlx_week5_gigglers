@@ -9,31 +9,25 @@ It provides more control over the sweep process compared to the CLI-based approa
 import wandb
 import os
 
-from mnist_transformer import TrainingHyperparameters
-from mnist_transformer import ModelHyperparameters
-from mnist_transformer import train_model
+from urban_sound_classifier import TrainingHyperparameters
+from urban_sound_classifier import ModelHyperparameters
+from urban_sound_classifier import train_model
 
 # Sweep configuration - equivalent to wandb_sweep.yaml but in Python
 SWEEP_CONFIG = {
     'method': 'bayes',  # Can be 'grid', 'random', or 'bayes'
     'metric': {
-        'name': 'test_loss',
-        'goal': 'minimize'
+        'name': 'Test Accuracy', 'Test F1 Score (macro)'
+        'goal': 'maximize'
     },
     'parameters': {
+        'num_epochs':{
+            'values': [10, 20]
+        },
         'batch_size': {
             'values': [128]
         },
-        'num_epochs':{
-            'values': [10]
-        },
-        'num_heads':{
-            'values': [2,4,8]
-        },
-        'num_layers':{
-            'values': [2,4,6]
-        },
-        'learning_rate': {
+        'lr': {
             'min': 1e-5,
             'max': 1e-3,
             'distribution': 'log_uniform'
@@ -43,11 +37,21 @@ SWEEP_CONFIG = {
             'max': 1e-3,
             'distribution': 'log_uniform'
         },
-        'drop_rate': {
-            'min': 0.1,
-            'max': 0.5,
-            'distribution': 'uniform'
-        }
+        'patch_size':{
+            'values': [8, 16] # dividible by 128
+        },
+        'embed_dim':{
+            'values':[64, 128]
+        },
+        'ff_dim':{
+            'values':[2048]
+        },
+        'num_heads':{
+            'values': [8] # dividible by 128
+        },
+        'num_layers':{
+            'values': [3, 6]
+        },
     }
 }
 
@@ -57,8 +61,8 @@ def train_sweep_run():
     This function is called by the sweep agent for each hyperparameter combination.
     """
     import torch
-    from prepare_dataset import Combine
-    from mnist_transformer import ViT, evaluate_model
+    from urban_sound_classifier import Combine
+    from urban_sound_classifier import ViT, evaluate_model
 
     # Initialize wandb run
     wandb.init()
@@ -69,15 +73,17 @@ def train_sweep_run():
 
         # Build dataclasses from wandb.config, using defaults for missing values
         train_cfg = TrainingHyperparameters(
-            batch_size = config.batch_size,
             num_epochs = config.num_epochs,
-            learning_rate = config.learning_rate,
+            batch_size = config.batch_size,
+            lr = config.lr,
             weight_decay = config.weight_decay,
-            drop_rate = config.drop_rate
         )
         model_cfg = ModelHyperparameters(
+            patch_size = config.patch_size,
+            embed_dim = config.embed_dim,
+            ff_dim  = config.ff_dim,
             num_heads = config.num_heads,
-            num_layers = config.num_layers
+            num_layers = config.num_layers,
             # Other model parameters can use defaults or be added to SWEEP_CONFIG if you want to sweep them
         )
 
@@ -162,9 +168,9 @@ def main():
     """
     import argparse
     
-    parser = argparse.ArgumentParser(description='Run hyperparameter sweeps for HackerNews model')
-    parser.add_argument('--project', default='hackernews-score-prediction',
-                        help='W&B project name (default: hackernews-score-prediction)')
+    parser = argparse.ArgumentParser(description='Run hyperparameter sweeps for the model')
+    parser.add_argument('--project', default='model-prediction',
+                        help='W&B project name (default: model-prediction)')
     parser.add_argument('--count', type=int, default=20,
                         help='Number of sweep runs (default: 20)')
     parser.add_argument('--sweep-id', type=str,

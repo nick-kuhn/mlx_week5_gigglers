@@ -9,6 +9,24 @@ import librosa
 from tqdm import tqdm
 import matplotlib.pyplot as plt
 from typing import List, Optional, Tuple, Any
+from dataclasses import dataclass
+from sklearn.metrics import f1_score
+
+# pre-set all the relevant parameters for later sweep
+@dataclass
+class TrainingHyperparameters:
+    num_epochs = 10
+    batch_size = 128
+    lr = 3e-4
+    weight_decay = 1e-4
+    
+@dataclass
+class ModelHyperparameters:
+    patch_size = 8  # for patchigy: should divide both n_mels (128) and n_frames (128)
+    embed_dim = 64
+    ff_dim = 2048
+    num_heads = 8
+    num_layers = 3 # number of the encoder blocks
 
 
 ### 1. load in the dataset
@@ -203,34 +221,29 @@ def evaluate_model(model, test_loader, device, patch_size):
     model.eval()
     correct = 0
     total = 0
+    all_preds = []
+    all_targets = []
     with torch.no_grad():
         for batch in test_loader:
             data, target = batch[0], batch[1]
             data, target = data.to(device), target.to(device)
-            # patchify the image into a grid (in order to implement vision transformer)
-            data = patchify(data,patch_size) #[64,1,4,4,7,7]
+            data = patchify(data, patch_size)
             output = model(data)
             _, predicted = output.max(1)
             total += target.size(0)
             correct += predicted.eq(target).sum().item()
+            all_preds.extend(predicted.cpu().numpy())
+            all_targets.extend(target.cpu().numpy())
     accuracy = 100. * correct / total
+    f1 = f1_score(all_targets, all_preds, average='macro')  # or 'weighted'
     print(f'Test Accuracy: {accuracy:.2f}%')
-    return accuracy
+    print(f'Test F1 Score (macro): {f1:.4f}')
+    return accuracy, f1
 
 def main():
-    # set all hyper-parameters
-    batch_size = 128
-    lr = 3e-4
-    num_epochs = 40
-    img_width = 128  # n_mels
-    img_channels = 1
+    img_width = power_spectra[0].shape[-1]
+    img_channels = 1 # only 1 channel not RGB 3 channels
     num_classes = 10
-    patch_size = 8  # should divide both n_mels and n_frames
-    embed_dim = 64
-    ff_dim = 2048
-    num_heads = 8
-    num_layers = 3
-    weight_decay = 1e-4
     # Set device
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     print(f'Using device: {device}')
@@ -263,7 +276,7 @@ def main():
         for epoch in range(num_epochs):
             print(f'\nEpoch {epoch + 1}/{num_epochs}')
             train_model(model, train_loader, criterion, optimizer, device, patch_size)
-            evaluate_model(model, val_loader, device, patch_size)
+            accuracy, f1 = evaluate_model(model, val_loader, device, patch_size)
     # Save the last trained model (optional)
     torch.save(model.state_dict(), 'sound_classifier_transformer.pth')
     print('Model saved to sound_classifier_transformer.pth')
