@@ -1,0 +1,65 @@
+# ─── defaults: static settings ───────────────────────────────────────────────
+defaults:
+  paths:
+    data_root:      ben_branch/data
+    arrow_train:    data/train
+    wav_output:     data/wav_files
+
+  audio:
+    target_sampling_rate: 16000
+    fixed_duration:       4.0
+
+  spectrogram:
+    n_fft:        1024
+    hop_length:   512
+    n_mels:       128
+    fmin:         20
+    fmax:         8000
+
+  augmentations:
+    waveform:
+      time_shift:
+        shift_max:      0.2
+      add_noise:
+        noise_level:    0.005
+      pitch_shift:
+        n_steps:        [-2, 2]
+      time_stretch:
+        rate:           [0.8, 1.25]
+      mixup:
+        alpha:          0.2
+        prob:           0.5
+    spec_masking:
+      freq:
+        F_param:        15
+        num_masks:      2
+      time:
+        T_param:        20
+        num_masks:      2
+
+  preprocessing:
+    num_workers:    4
+
+  training:
+    folds:
+      train:        [1,2,3,4,5,6,7,8,9]
+      val:          [10]
+
+# ─── sweep: hyperparameters to grid-search ──────────────────────────────────
+sweep:
+  model:
+    conv_channels:  [[32, 64, 128], [16, 32, 64]]
+    kernel_sizes:   [[[3,3], [3,3], [3,3]]] 
+    pool_sizes:     [[[2,2], [2,2], [2,2]]]
+    mlp_hidden:     [[256], [512]]
+    dropout:        [0.2, 0.3]
+    num_classes:    [10]
+    n_mels:         [128]
+    max_frames:     [125]
+
+  training:
+    batch_size:     [64]
+    lr:             [1e-3, 5e-4]
+    epochs:         [50]
+    patience:       [5]
+    scheduler:      ["cosine", "step"]
