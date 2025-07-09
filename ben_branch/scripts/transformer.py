@@ -35,7 +35,8 @@ def patch_img(imgs, patch_size, stride):
         batch_columns.append(columns)
     return torch.stack(batch_columns)
         
-
+NUM_HEADS = 8
+EMBED_DIM = 128
 
 class Tranformer(nn.Module):
     def __init__(self, x, embed_dim, patch_size, stride, num_blocks):
@@ -46,32 +47,34 @@ class Tranformer(nn.Module):
         self.linear = nn.Linear() 
 
     def forward(self, x, patch_size, stride, num_blocks):
-        x = self.patch(x, patch_size, stride)
+        x = self.patch(x, patch_size, stride) # will it magically handle shapes (including batch?)
         x = self.pos_enc(x)
         for _ in num_blocks:
             x = x.MultiHeadAttention(x)
 
         # Now take the output from the last block and do:    
         x = self.linear(x, 10) #project to 10 classes
+        # Apply softmax here or will CES loss do this automatically?
         return x
 
 
 class MultiHeadAttention(nn.Module):
     def __init__(self, x):
         super().__init__()
-
+        self.proj = nn.Linear()
         self.self_att = SelfAttention()
         self.norm = nn.LayerNorm()
         self.ffn = FeedForward()
 
+    def forward(self, x, num_heads, embed_dim):
+        
+        for _ in num_heads:
+            x = self.proj(x, num_heads/embed_dim)
+            x_att = self.self_att(x)
+        x = self.norm(x + x_att)
+        x = self.ffn(x)
 
-    def forward():
 
-        for _ in heads:
-            # project down to embed_dim/num_heads
-            # self att
-            # resid
-            # norm
             # ffn
             # resid
             # norm
