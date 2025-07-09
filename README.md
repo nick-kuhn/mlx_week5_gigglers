@@ -1,3 +1,14 @@
+
+
+#
+
+
+# Features
+
+## Generate Audio Dataset
+Execute `uv run generate_audio.py` to generate audio files and a csv `audio_dataset.csv` from input file `commands.csv` (this may take a bit). 
+
+
 # Environment Setup Guide
 
 This guide shows you how to create and manage a Python 3.10 environment using **uv**, install dependencies from `pyproject.toml` in your project root, and integrate with Jupyter/VS Code.
