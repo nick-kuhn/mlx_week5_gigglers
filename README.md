@@ -112,3 +112,13 @@ Happy coding! 🚀
 - transformer
 - cnn transformer
 - ensemble
+
+### Run train whisper
+```
+python ben_branch/whisper/scratch/train_whspr_classifier.py 
+```
+
+### TODO:
+- fix audio gen
+- fix class names! currently its making 12 classes and giving only 'volume' rather than 'volume_up' etc
+- Look at other TODO in train_whspr_classifier.py
