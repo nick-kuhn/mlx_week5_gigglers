@@ -19,49 +19,60 @@ from tqdm import tqdm
 import time
 import random
 
+# Add these:
+from pydub import AudioSegment
 
 class AudioGenerator:
-    """Handles text-to-speech conversion for the command dataset."""
-    
-    def __init__(self, output_dir="generated_audio", voice_id=0, rate=200, volume=1.0, random_voices=True):
+    def __init__(
+        self,
+        output_dir: str = "ben_branch/data/generated_audio",
+        voice_id: int = 0,
+        rate: int = 150,
+        volume: float = 1.0,
+        random_voices: bool = True
+    ) -> None:
         """
         Initialize the audio generator.
-        
+
         Args:
-            output_dir (str): Directory to save audio files
-            voice_id (int): Voice ID to use for TTS (ignored if random_voices=True)
-            rate (int): Speech rate in words per minute
-            volume (float): Volume level (0.0 to 1.0)
-            random_voices (bool): Whether to randomly select voices for each audio file
+            output_dir: Directory to save audio files.
+            voice_id: Voice ID to use (ignored if random_voices=True).
+            rate: Speech rate in words per minute.
+            volume: Volume level (0.0 to 1.0).
+            random_voices: Whether to randomly select voices.
         """
         self.output_dir = Path(output_dir)
         self.output_dir.mkdir(exist_ok=True)
-        
-        # Initialize TTS engine temporarily to get voices
-        temp_engine = pyttsx3.init()
-        self.voices = temp_engine.getProperty('voices')
-        del temp_engine
-        
-        # Store voice settings
+
+        # Initialise TTS engine and get all voices
+        self.engine = pyttsx3.init()
+        all_voices = self.engine.getProperty("voices")
+
+        # Keep only English voices
+        self.voices = [
+            v for v in all_voices
+            if "English" in v.name or "english" in v.name
+        ]
+
         self.voice_id = voice_id
         self.rate = rate
         self.volume = volume
         self.random_voices = random_voices
-        
-        # Validate voice ID and setup
+
+        if not self.voices:
+            raise RuntimeError("No English voices found!")
+
         if self.random_voices:
-            print(f"Random voice selection enabled. Found {len(self.voices) if self.voices else 0} available voices.")
-            if self.voices:
-                print("Available voices:")
-                for i, voice in enumerate(self.voices):
-                    print(f"  {i}: {voice.name}")
+            print(f"Random English voice selection: {len(self.voices)} voices available.")
+            for i, v in enumerate(self.voices):
+                print(f"  {i}: {v.name}")
         else:
-            if self.voices and 0 <= voice_id < len(self.voices):
-                self.voice_id = voice_id
-                print(f"Voice set to: {self.voices[voice_id].name}")
+            if 0 <= self.voice_id < len(self.voices):
+                print(f"Voice set to: {self.voices[self.voice_id].name}")
             else:
+                print(f"Warning: Voice ID {voice_id} not in English list, defaulting to 0.")
                 self.voice_id = 0
-                print(f"Warning: Voice ID {voice_id} not available. Using default voice.")
+
     
     def set_voice(self, voice_id):
         """Set the voice to use for TTS."""
@@ -130,63 +141,57 @@ class AudioGenerator:
         filename = f"audio_{row_id:04d}_{clean_label}.wav"
         return filename
     
-    def generate_audio(self, text, filename):
+
+    def generate_audio(self, text: str, filename: str) -> tuple[bool, dict]:
         """
-        Generate audio file from text.
-        
+        Generate an audio file from text using the filtered English voices,
+        then resample the result to 16 kHz.
+
         Args:
-            text (str): Text to convert to speech
-            filename (str): Output filename
-            
+            text: The text to synthesise.
+            filename: The target WAV filename.
+
         Returns:
-            tuple: (success: bool, voice_info: dict) 
-                   success: True if successful, False otherwise
-                   voice_info: Dictionary with voice information used
+            A tuple (success, voice_info), where success is True if the file
+            was generated (and resampled) without error, and voice_info gives
+            which voice was used.
         """
         try:
+            # Prepare file path and TTS engine
             filepath = self.output_dir / filename
-            
-            # Create a new engine instance for each audio generation
-            # This prevents hanging issues common with pyttsx3
-            engine = pyttsx3.init()
-            
-            # Set properties for the new engine
-            selected_voice_id = 0  # Default
-            voice_info = {"voice_id": 0, "voice_name": "Default"}
-            
-            if self.voices:
-                if self.random_voices:
-                    # Randomly select a voice for this audio file
-                    selected_voice_id = random.randint(0, len(self.voices) - 1)
-                    engine.setProperty('voice', self.voices[selected_voice_id].id)
-                    voice_info = {
-                        "voice_id": selected_voice_id,
-                        "voice_name": self.voices[selected_voice_id].name
-                    }
-                elif 0 <= self.voice_id < len(self.voices):
-                    # Use the specified voice
-                    selected_voice_id = self.voice_id
-                    engine.setProperty('voice', self.voices[selected_voice_id].id)
-                    voice_info = {
-                        "voice_id": selected_voice_id,
-                        "voice_name": self.voices[selected_voice_id].name
-                    }
-            
-            engine.setProperty('rate', self.rate)
-            engine.setProperty('volume', self.volume)
-            
-            # Generate audio
+            engine = self.engine
+
+            # Choose voice
+            if self.random_voices:
+                vid = random.randrange(len(self.voices))
+            else:
+                vid = self.voice_id
+
+            # Apply TTS properties
+            engine.setProperty("voice", self.voices[vid].id)
+            engine.setProperty("rate", self.rate)
+            engine.setProperty("volume", self.volume)
+
+            voice_info = {"voice_id": vid, "voice_name": self.voices[vid].name}
+
+            # Generate raw WAV
             engine.save_to_file(text, str(filepath))
             engine.runAndWait()
-            
-            # Clean up the engine
-            del engine
-            
+
+            # Resample to 16 kHz
+            try:
+                audio = AudioSegment.from_file(str(filepath))
+                audio = audio.set_frame_rate(16000)
+                audio.export(str(filepath), format="wav")
+            except Exception as e:
+                print(f"Warning: could not resample {filename}: {e}")
+
             return True, voice_info
-            
+
         except Exception as e:
-            print(f"Error generating audio for {filename}: {e}")
+            print(f"Error generating {filename}: {e}")
             return False, {"voice_id": -1, "voice_name": "Error"}
+
     
     def process_csv(self, input_csv="commands.csv", output_csv="audio_dataset.csv"):
         """
@@ -312,8 +317,8 @@ def main():
                        help='Input CSV file (default: commands.csv)')
     parser.add_argument('--output', '-o', default='audio_dataset.csv',
                        help='Output CSV file (default: audio_dataset.csv)')
-    parser.add_argument('--audio-dir', '-d', default='generated_audio',
-                       help='Directory for audio files (default: generated_audio)')
+    parser.add_argument('--audio-dir', '-d', default='ben_branch/data/generated_audio',
+                       help='Directory for audio files (default: ben_branch/data/generated_audio)')
     parser.add_argument('--voice', '-v', type=int, default=0,
                        help='Voice ID to use (default: 0)')
     parser.add_argument('--rate', '-r', type=int, default=200,
