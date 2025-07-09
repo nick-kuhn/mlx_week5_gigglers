@@ -25,11 +25,8 @@ def execute_command(command):
     elif command == "maximize_window":
         pyautogui.hotkey('win', 'up')
 
-    elif command == "open google":
+    elif command == "google":
         webbrowser.open("https://www.google.com")
-
-    elif command == "close google":
-        pyautogui.hotkey('alt', 'f4')  # assumes browser is focused
 
     elif command == "play_music":
         pyautogui.press('playpause')  # toggles play/pause media key
@@ -58,8 +55,7 @@ if __name__ == "__main__":
         "open_browser",
         "open_notepad",
         "volume_up",
-        "open google",
-        "close google",
+        "google",
         "minimize_window",
         "maximize_window",
         "switch_window",
