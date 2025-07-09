@@ -11,7 +11,7 @@ import torchaudio
 
 # Global constants
 NUM_CLASSES = 10  # number of target classes
-BATCH_SIZE = 8
+BATCH_SIZE = 32
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # Base folder for the script (so paths work anywhere)
@@ -53,6 +53,7 @@ class AudioDataset(Dataset):
 
 class DummyDataset(Dataset):
   """
+  FOR DEBUGGING ONLY!
   Dummy dataset that returns random log-Mel tensors and random labels for debugging.
   """
   def __init__(self, processor: WhisperProcessor, n_items: int = DUMMY_ITEMS):
@@ -94,7 +95,7 @@ class WhisperEncoderClassifier(nn.Module):
     # Get the last hidden state only for each time step
     last_hidden = encoder_outputs.last_hidden_state  # (batch, seq_len, hidden_size)
     # Mean pool over time steps
-    pooled = last_hidden.mean(dim=1)
+    pooled = last_hidden.mean(dim=-2) #TODO can we do better?
     # Run linear classifier
     return self.classifier(pooled)
 
@@ -102,7 +103,7 @@ class WhisperEncoderClassifier(nn.Module):
 def train(data_dir: str, model_dir: str, use_dummy: bool = False):
   # Discover all classes by filename
   audio_files = list(Path(data_dir).glob("*.[wW][aA][vV]"))
-  classes     = sorted({f.stem.split("_")[2] for f in audio_files})
+  classes     = sorted({f.stem.split("_")[2] for f in audio_files}) #TODO fix how we get classes
   print(f"Found {len(classes)} classes:", classes)
   label_to_idx = {cls: i for i, cls in enumerate(classes)}
 
@@ -123,7 +124,7 @@ def train(data_dir: str, model_dir: str, use_dummy: bool = False):
   optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
 
   # one epoch example
-  model.train()
+  model.train() #TODO are freezing or not currently?
   correct, seen = 0, 0
   for batch in loader:
     inputs  = batch["input_features"].to(DEVICE)
@@ -143,7 +144,11 @@ def train(data_dir: str, model_dir: str, use_dummy: bool = False):
     acc      = correct / seen
 
     print(f"Batch loss: {loss.item():.4f}   |   running acc: {acc*100:.1f}%")
-
+    #TODO print true class distribution vs pred class distribution
+    true_dist = labels.bincount(minlength=NUM_CLASSES)
+    pred_dist = preds.bincount(minlength=NUM_CLASSES)
+    print(f"True class distribution: {true_dist}")
+    print(f"Pred class distribution: {pred_dist}")
 
 def main():
   # detect --dummy flag for debug

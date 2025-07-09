@@ -34,7 +34,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--model-dir",
         type=Path,
-        default=Path("whisper/models/whisper_tiny"),
+        default=Path("ben_branch/whisper/models/whisper_tiny"),
         help="Path to your whisper_tiny folder",
     )
     args = parser.parse_args()
