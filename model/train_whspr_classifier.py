@@ -19,7 +19,8 @@ from model.download_model import download_model
 
 # Global constants
 NUM_CLASSES = 10  # number of target classes
-BATCH_SIZE = 32
+BATCH_SIZE = 16
+EPOCHS = 10       # ← default number of epochs
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # Base folder for the script (so paths work anywhere)
@@ -39,7 +40,7 @@ print(f'Found {len(os.listdir(DATA_DIR))} audio files')  # Ensure the data direc
 
 
 
-def train(data_dir: str, model_dir: str, use_dummy: bool = False):
+def train(data_dir: str, model_dir: str, use_dummy: bool = False, epochs: int = EPOCHS):
   # Discover all classes by filename
   data_file = data_dir.parent.parent / "audio_dataset.csv"
   df = pd.read_csv(data_file)
@@ -75,29 +76,34 @@ def train(data_dir: str, model_dir: str, use_dummy: bool = False):
   # one epoch example
   model.train() #TODO are freezing or not currently?
   correct, seen = 0, 0
-  for batch in loader:
-    inputs  = batch["input_features"].to(DEVICE)
-    labels  = batch["label"].to(DEVICE)
+  for epoch in range(1, epochs + 1):
+    print(f"\n▶️  Epoch {epoch}/{epochs}")
+    model.train()  # ensure training mode
 
-    logits  = model(inputs)
-    loss    = criterion(logits, labels)
+    correct, seen = 0, 0
+    for batch in loader:
+      inputs  = batch["input_features"].to(DEVICE)
+      labels  = batch["label"].to(DEVICE)
 
-    optimizer.zero_grad()
-    loss.backward()
-    optimizer.step()
+      logits  = model(inputs)
+      loss    = criterion(logits, labels)
 
-    # compute batch accuracy
-    preds    = logits.argmax(dim=1)
-    correct += (preds == labels).sum().item()
-    seen    += labels.size(0)
-    acc      = correct / seen
+      optimizer.zero_grad()
+      loss.backward()
+      optimizer.step()
 
-    print(f"Batch loss: {loss.item():.4f}   |   running acc: {acc*100:.1f}%")
-    #TODO print true class distribution vs pred class distribution
-    true_dist = labels.bincount(minlength=NUM_CLASSES)
-    pred_dist = preds.bincount(minlength=NUM_CLASSES)
-    print(f"True class distribution: {true_dist}")
-    print(f"Pred class distribution: {pred_dist}")
+      # compute batch accuracy
+      preds    = logits.argmax(dim=1)
+      correct += (preds == labels).sum().item()
+      seen    += labels.size(0)
+      acc      = correct / seen
+
+      print(f"Batch loss: {loss.item():.4f}   |   running acc: {acc*100:.1f}%")
+      #TODO print true class distribution vs pred class distribution
+      true_dist = labels.bincount(minlength=NUM_CLASSES)
+      pred_dist = preds.bincount(minlength=NUM_CLASSES)
+      print(f"True class distribution: {true_dist}")
+      print(f"Pred class distribution: {pred_dist}")
 
 def main():
   # detect --dummy flag for debug
