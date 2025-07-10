@@ -8,6 +8,7 @@ from torch.utils.data import Dataset, DataLoader
 from transformers import WhisperProcessor, WhisperModel
 import torchaudio
 from .dataset import AudioDataset, DummyDataset
+from .model import WhisperEncoderClassifier
 
 
 # Global constants
@@ -27,34 +28,6 @@ DUMMY_ITEMS = 1000
 
 print(f"Using device: {DEVICE}, CUDA version: {torch.version.cuda}, GPU count: {torch.cuda.device_count()}")
 
-
-class WhisperEncoderClassifier(nn.Module):
-  """
-  Classification model using Whisper's encoder as a feature extractor
-  plus a simple linear head.
-  """
-  def __init__(self, model_dir: str, num_classes: int = NUM_CLASSES):
-    super().__init__()
-    # load pretrained encoder
-    self.whisper = WhisperModel.from_pretrained(model_dir).encoder
-    hidden_size = self.whisper.config.d_model
-    # classification head
-    self.classifier = nn.Linear(hidden_size, num_classes)
-
-  def forward(self, input_features: torch.Tensor) -> torch.Tensor:
-    """
-    We input a single mel spec for each audio file via input_features: (batch, seq_len, feature_dim)
-    the model will split the audio up into timeframes internally and output a hidden state for each
-    timeframe. So encoder_outputs will have multiple embeddings per input audio sample.
-    """
-    # Get the encoder outputs, will split audio into timesteps internally
-    encoder_outputs = self.whisper(input_features.to(DEVICE))
-    # Get the last hidden state only for each time step
-    last_hidden = encoder_outputs.last_hidden_state  # (batch, seq_len, hidden_size)
-    # Mean pool over time steps
-    pooled = last_hidden.mean(dim=-2) #TODO can we do better?
-    # Run linear classifier
-    return self.classifier(pooled)
 
 
 def train(data_dir: str, model_dir: str, use_dummy: bool = False):
