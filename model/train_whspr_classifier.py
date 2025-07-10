@@ -1,6 +1,7 @@
 import sys
 import random
 from pathlib import Path
+import pandas as pd
 import argparse
 import torch
 from torch import nn
@@ -32,8 +33,9 @@ print(f"Using device: {DEVICE}, CUDA version: {torch.version.cuda}, GPU count: {
 
 def train(data_dir: str, model_dir: str, use_dummy: bool = False):
   # Discover all classes by filename
-  audio_files = list(Path(data_dir).glob("*.[wW][aA][vV]"))
-  classes     = sorted({f.stem.split("_")[2] for f in audio_files}) #TODO fix how we get classes
+  data_file = data_dir.parent.parent / "audio_dataset.csv"
+  df = pd.read_csv(data_file)
+  classes     = sorted(df["class_label"].unique())
   print(f"Found {len(classes)} classes:", classes)
   label_to_idx = {cls: i for i, cls in enumerate(classes)}
 
@@ -45,7 +47,7 @@ def train(data_dir: str, model_dir: str, use_dummy: bool = False):
     dataset = DummyDataset(processor, n_items=DUMMY_ITEMS)
     print("⚙️ Using dummy dataset with random data")
   else:
-    dataset = AudioDataset(Path(data_dir), processor, label_to_idx)
+    dataset = AudioDataset(data_file, processor, label_to_idx)
   loader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=True)
 
   # build model, loss, optimizer
