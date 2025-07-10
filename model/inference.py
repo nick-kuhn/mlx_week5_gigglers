@@ -5,6 +5,7 @@ import torch
 import torchaudio
 from transformers import WhisperProcessor
 import numpy as np
+import csv
 
 # Add the project root to Python path for absolute imports
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
@@ -20,18 +21,27 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Paths
 MODEL_DIR = BASE_DIR / "whisper_models" / "whisper_tiny"
-CHECKPOINT_PATH = BASE_DIR / "model" / "final_model.pt"
+CHECKPOINT_PATH = BASE_DIR / "model" / "best_model.pt"
 VALIDATION_DIR = BASE_DIR / "data" / "validation"
+RECORDINGS_CSV = VALIDATION_DIR / "recordings.csv"
 
-def extract_class_from_filename(filename):
-    """Extract class name from filename like '1_open_browser.wav'"""
-    # Remove file extension
-    name_without_ext = filename.replace('.wav', '')
-    # Split by underscore and take everything after the first underscore
-    parts = name_without_ext.split('_', 1)
-    if len(parts) > 1:
-        return parts[1]  # Return everything after first underscore
-    return name_without_ext
+def load_recordings_from_csv(csv_path):
+    """Load recordings data from CSV file"""
+    recordings = {}
+    
+    if not csv_path.exists():
+        print(f"❌ CSV file not found: {csv_path}")
+        return recordings
+    
+    with open(csv_path, 'r', encoding='utf-8') as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            filename = Path(row['filename']).name  # Get just the filename, not the full path
+            command_token = row['command_token']
+            recordings[filename] = command_token
+    
+    print(f"📄 Loaded {len(recordings)} recordings from CSV")
+    return recordings
 
 def load_checkpoint(checkpoint_path):
     """Load the saved checkpoint"""
@@ -83,6 +93,12 @@ def run_inference():
         print("Please run training first to create the checkpoint.")
         return
     
+    # Load recordings from CSV
+    recordings = load_recordings_from_csv(RECORDINGS_CSV)
+    if not recordings:
+        print("❌ No recordings found in CSV file")
+        return
+    
     # Load checkpoint
     checkpoint, classes, label_to_idx, idx_to_label = load_checkpoint(CHECKPOINT_PATH)
     
@@ -99,14 +115,22 @@ def run_inference():
     print(f"\n✅ Model loaded successfully!")
     print(f"📁 Looking for validation files in: {VALIDATION_DIR}")
     
-    # Get all wav files in validation directory
-    wav_files = list(VALIDATION_DIR.glob("*.wav"))
+    # Get all wav files in validation directory that are also in CSV
+    wav_files = []
+    for wav_file in VALIDATION_DIR.glob("*.wav"):
+        if wav_file.name in recordings:
+            wav_files.append(wav_file)
+    
+    # Also check for .WAV files (uppercase)
+    for wav_file in VALIDATION_DIR.glob("*.WAV"):
+        if wav_file.name in recordings:
+            wav_files.append(wav_file)
     
     if not wav_files:
-        print(f"❌ No .wav files found in {VALIDATION_DIR}")
+        print(f"❌ No .wav/.WAV files found in {VALIDATION_DIR} that match CSV entries")
         return
     
-    print(f"📄 Found {len(wav_files)} validation files")
+    print(f"📄 Found {len(wav_files)} validation files matching CSV entries")
     
     # Track predictions
     correct_predictions = 0
@@ -119,19 +143,12 @@ def run_inference():
     for audio_file in sorted(wav_files):
         filename = audio_file.name
         
-        # Extract true class from filename
-        true_class_name = extract_class_from_filename(filename)
+        # Get true class from CSV
+        true_class = recordings[filename]
         
-        # Check if we need to add angle brackets
-        true_class_with_brackets = f"<{true_class_name}>"
-        
-        # Determine which format matches our training classes
-        if true_class_with_brackets in classes:
-            true_class = true_class_with_brackets
-        elif true_class_name in classes:
-            true_class = true_class_name
-        else:
-            print(f"⚠️  Unknown class for {filename}: {true_class_name}")
+        # Check if the class exists in our model
+        if true_class not in classes:
+            print(f"⚠️  Unknown class for {filename}: {true_class}")
             continue
         
         try:
