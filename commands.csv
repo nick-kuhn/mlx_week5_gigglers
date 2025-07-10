@@ -2444,106 +2444,106 @@ id,sentence,action_token
 2443,Expand to horizon view.<maximize_window>,<maximize_window>
 2444,Open to limitless pixels.<maximize_window>,<maximize_window>
 2445,Spread out fully across the screen.<maximize_window>,<maximize_window>
-2446,Can you make this window bigger so I can see everything? <maximize window>,<maximize window>
-2447,"Ugh, this is too small, I need to maximize this <maximize window>.",<maximize window>
-2448,"Go ahead and maximize this for me <maximize window>, will you?",<maximize window>
-2449,Let's get this to full screen <maximize window>.,<maximize window>
-2450,I want this window to be maximized <maximize window>.,<maximize window>
-2451,This needs to be blown up to fit the screen <maximize window>.,<maximize window>
-2452,Make the current window maximized <maximize window>.,<maximize window>
-2453,Could you please maximize the active window <maximize window>?,<maximize window>
-2454,"Hey, uh, maximize this please <maximize window>.",<maximize window>
-2455,"I can't read this, make it full screen <maximize window>.",<maximize window>
-2456,Let's see this in full view <maximize window>.,<maximize window>
-2457,Show me this on the full screen <maximize window>.,<maximize window>
-2458,I need to maximize this <maximize window> so I can read the text properly.,<maximize window>
-2459,"Okay, now make it full screen <maximize window>.",<maximize window>
-2460,Can we maximize this application <maximize window>?,<maximize window>
-2461,"Just maximize this <maximize window>, thanks.",<maximize window>
-2462,Enlarge the window to fill the display <maximize window>.,<maximize window>
-2463,I think I want to make this one full screen <maximize window>.,<maximize window>
-2464,Go to full screen mode <maximize window>.,<maximize window>
-2465,Please maximize the window <maximize window> I'm working in.,<maximize window>
-2466,"I need a better view, so make this full screen <maximize window>.",<maximize window>
-2467,"This is way too tiny, maximize it now <maximize window>.",<maximize window>
-2468,Would you be able to make this full screen <maximize window> for me?,<maximize window>
-2469,"Okay, let's maximize this <maximize window> and see.",<maximize window>
-2470,I'd like to make the current screen full size <maximize window>.,<maximize window>
-2471,Fill the whole screen with this window <maximize window>.,<maximize window>
-2472,"Hmm, let's make it full screen <maximize window> and get a proper look.",<maximize window>
-2473,"Make it big, I mean, full screen <maximize window>.",<maximize window>
-2474,"Can you, um, maximize this window <maximize window>?",<maximize window>
-2475,Blow this up to full screen <maximize window> for me.,<maximize window>
-2476,"I want to see only this, so make it full screen <maximize window>.",<maximize window>
-2477,Let's make this full screen <maximize window> so we can all see.,<maximize window>
-2478,"Could you maximize this <maximize window>, please?",<maximize window>
-2479,"Computer, make the front window full screen <maximize window>.",<maximize window>
-2480,"I need this to be bigger, so maximize it <maximize window>.",<maximize window>
-2481,"Okay, let's take this to full screen <maximize window>.",<maximize window>
-2482,"I'm having trouble seeing, can we make the view full screen <maximize window>?",<maximize window>
-2483,The window needs to be maximized <maximize window> for the presentation.,<maximize window>
-2484,"Come on, make it full screen <maximize window> already.",<maximize window>
-2485,Expand this window to its full size <maximize window>.,<maximize window>
-2486,"I need to see the details, so expand it <maximize window>.",<maximize window>
-2487,Let's go full screen with this <maximize window>.,<maximize window>
-2488,Could you just make this full screen <maximize window> for a second?,<maximize window>
-2489,Make this fill the screen <maximize window>.,<maximize window>
-2490,I think it would be better if we made this full screen <maximize window>.,<maximize window>
-2491,"Okay, um, can you make this page full screen <maximize window>?",<maximize window>
-2492,This should be in full screen mode <maximize window>.,<maximize window>
-2493,"Make this bigger, you know, full screen <maximize window>.",<maximize window>
-2494,I need to view this in full-screen mode <maximize window>.,<maximize window>
-2495,Can you make this window full screen <maximize window> for me?,<maximize window>
-2496,"Let me see this in its full glory, make it full screen <maximize window>.",<maximize window>
-2497,"This view is too restrictive, make it full screen <maximize window>.",<maximize window>
-2498,"Let's, uh, make this window full screen <maximize window>.",<maximize window>
-2499,Make this take up the whole screen <maximize window>.,<maximize window>
-2500,"I want this to be the only thing I see, so make it full screen <maximize window>.",<maximize window>
-2501,How do I make this full screen <maximize window>?,<maximize window>
-2502,"Show me this bigger, I mean full screen <maximize window>.",<maximize window>
-2503,I'd like to make this window full screen <maximize window>.,<maximize window>
-2504,Can you maximize the current application <maximize window>?,<maximize window>
-2505,Let's get a bigger picture and make it full screen <maximize window>.,<maximize window>
-2506,"Please, just make it full screen <maximize window>.",<maximize window>
-2507,I need to expand this <maximize window> to see the chart properly.,<maximize window>
-2508,Go on and make it full screen <maximize window>.,<maximize window>
-2509,"I need more space, so maximize this window <maximize window>.",<maximize window>
-2510,This would be easier to read if you made it full screen <maximize window>.,<maximize window>
-2511,"Okay, blow it up to full screen <maximize window>.",<maximize window>
-2512,"Let's, like, make this full screen <maximize window>.",<maximize window>
-2513,Make it full screen <maximize window>.,<maximize window>
-2514,Can we see this in full view mode <maximize window>?,<maximize window>
-2515,I want this to take over the screen <maximize window>.,<maximize window>
-2516,Make the window as large as possible <maximize window>.,<maximize window>
-2517,I think we should make this full screen <maximize window> now.,<maximize window>
-2518,Please make the active screen full size <maximize window>.,<maximize window>
-2519,"I need to see everything, so maximize this <maximize window>.",<maximize window>
-2520,Let's have a look at this in full screen <maximize window>.,<maximize window>
-2521,"This is too small to work with, make it full screen <maximize window>.",<maximize window>
-2522,Can you just make it bigger <maximize window>?,<maximize window>
-2523,I'd prefer this to be maximized <maximize window>.,<maximize window>
-2524,"Okay, um, can you make it full screen please <maximize window>.",<maximize window>
-2525,"The text is tiny, make the window full screen <maximize window>.",<maximize window>
-2526,I want to maximize this <maximize window> so I can focus.,<maximize window>
-2527,This really needs to be maximized <maximize window>.,<maximize window>
-2528,Let's just maximize this <maximize window> and be done with it.,<maximize window>
-2529,"Show me the big version, make it full screen <maximize window>.",<maximize window>
-2530,Go ahead and make this full screen <maximize window>.,<maximize window>
-2531,Could we make this full screen <maximize window> so everyone can see?,<maximize window>
-2532,I need to maximize this <maximize window> to check the resolution.,<maximize window>
-2533,Make this view full screen <maximize window>.,<maximize window>
-2534,I'm trying to make this window full screen <maximize window>.,<maximize window>
-2535,"Let's, you know, make this thing full screen <maximize window>.",<maximize window>
-2536,This should fill the entire screen <maximize window>.,<maximize window>
-2537,Can you make the current window full screen <maximize window>?,<maximize window>
-2538,I want this application to be maximized <maximize window>.,<maximize window>
-2539,"Let's get the full picture, make it full screen <maximize window>.",<maximize window>
-2540,"I need to see this larger, make it full screen <maximize window>.",<maximize window>
-2541,Enlarge this please <maximize window>.,<maximize window>
-2542,I'd like to see this in full-screen <maximize window>.,<maximize window>
-2543,"Okay, time to make this full screen <maximize window>.",<maximize window>
-2544,This needs to be maximized <maximize window> so I can work on it.,<maximize window>
-2545,"Please, make the window larger, I mean full screen <maximize window>.",<maximize window>
+2446,Can you make this window bigger so I can see everything? <maximize_window>,<maximize_window>
+2447,"Ugh, this is too small, I need to maximize this <maximize_window>.",<maximize_window>
+2448,"Go ahead and maximize this for me <maximize_window>, will you?",<maximize_window>
+2449,Let's get this to full screen <maximize_window>.,<maximize_window>
+2450,I want this window to be maximized <maximize_window>.,<maximize_window>
+2451,This needs to be blown up to fit the screen <maximize_window>.,<maximize_window>
+2452,Make the current window maximized <maximize_window>.,<maximize_window>
+2453,Could you please maximize the active window <maximize_window>?,<maximize_window>
+2454,"Hey, uh, maximize this please <maximize_window>.",<maximize_window>
+2455,"I can't read this, make it full screen <maximize_window>.",<maximize_window>
+2456,Let's see this in full view <maximize_window>.,<maximize_window>
+2457,Show me this on the full screen <maximize_window>.,<maximize_window>
+2458,I need to maximize this <maximize_window> so I can read the text properly.,<maximize_window>
+2459,"Okay, now make it full screen <maximize_window>.",<maximize_window>
+2460,Can we maximize this application <maximize_window>?,<maximize_window>
+2461,"Just maximize this <maximize_window>, thanks.",<maximize_window>
+2462,Enlarge the window to fill the display <maximize_window>.,<maximize_window>
+2463,I think I want to make this one full screen <maximize_window>.,<maximize_window>
+2464,Go to full screen mode <maximize_window>.,<maximize_window>
+2465,Please maximize the window <maximize_window> I'm working in.,<maximize_window>
+2466,"I need a better view, so make this full screen <maximize_window>.",<maximize_window>
+2467,"This is way too tiny, maximize it now <maximize_window>.",<maximize_window>
+2468,Would you be able to make this full screen <maximize_window> for me?,<maximize_window>
+2469,"Okay, let's maximize this <maximize_window> and see.",<maximize_window>
+2470,I'd like to make the current screen full size <maximize_window>.,<maximize_window>
+2471,Fill the whole screen with this window <maximize_window>.,<maximize_window>
+2472,"Hmm, let's make it full screen <maximize_window> and get a proper look.",<maximize_window>
+2473,"Make it big, I mean, full screen <maximize_window>.",<maximize_window>
+2474,"Can you, um, maximize this window <maximize_window>?",<maximize_window>
+2475,Blow this up to full screen <maximize_window> for me.,<maximize_window>
+2476,"I want to see only this, so make it full screen <maximize_window>.",<maximize_window>
+2477,Let's make this full screen <maximize_window> so we can all see.,<maximize_window>
+2478,"Could you maximize this <maximize_window>, please?",<maximize_window>
+2479,"Computer, make the front window full screen <maximize_window>.",<maximize_window>
+2480,"I need this to be bigger, so maximize it <maximize_window>.",<maximize_window>
+2481,"Okay, let's take this to full screen <maximize_window>.",<maximize_window>
+2482,"I'm having trouble seeing, can we make the view full screen <maximize_window>?",<maximize_window>
+2483,The window needs to be maximized <maximize_window> for the presentation.,<maximize_window>
+2484,"Come on, make it full screen <maximize_window> already.",<maximize_window>
+2485,Expand this window to its full size <maximize_window>.,<maximize_window>
+2486,"I need to see the details, so expand it <maximize_window>.",<maximize_window>
+2487,Let's go full screen with this <maximize_window>.,<maximize_window>
+2488,Could you just make this full screen <maximize_window> for a second?,<maximize_window>
+2489,Make this fill the screen <maximize_window>.,<maximize_window>
+2490,I think it would be better if we made this full screen <maximize_window>.,<maximize_window>
+2491,"Okay, um, can you make this page full screen <maximize_window>?",<maximize_window>
+2492,This should be in full screen mode <maximize_window>.,<maximize_window>
+2493,"Make this bigger, you know, full screen <maximize_window>.",<maximize_window>
+2494,I need to view this in full-screen mode <maximize_window>.,<maximize_window>
+2495,Can you make this window full screen <maximize_window> for me?,<maximize_window>
+2496,"Let me see this in its full glory, make it full screen <maximize_window>.",<maximize_window>
+2497,"This view is too restrictive, make it full screen <maximize_window>.",<maximize_window>
+2498,"Let's, uh, make this window full screen <maximize_window>.",<maximize_window>
+2499,Make this take up the whole screen <maximize_window>.,<maximize_window>
+2500,"I want this to be the only thing I see, so make it full screen <maximize_window>.",<maximize_window>
+2501,How do I make this full screen <maximize_window>?,<maximize_window>
+2502,"Show me this bigger, I mean full screen <maximize_window>.",<maximize_window>
+2503,I'd like to make this window full screen <maximize_window>.,<maximize_window>
+2504,Can you maximize the current application <maximize_window>?,<maximize_window>
+2505,Let's get a bigger picture and make it full screen <maximize_window>.,<maximize_window>
+2506,"Please, just make it full screen <maximize_window>.",<maximize_window>
+2507,I need to expand this <maximize_window> to see the chart properly.,<maximize_window>
+2508,Go on and make it full screen <maximize_window>.,<maximize_window>
+2509,"I need more space, so maximize this window <maximize_window>.",<maximize_window>
+2510,This would be easier to read if you made it full screen <maximize_window>.,<maximize_window>
+2511,"Okay, blow it up to full screen <maximize_window>.",<maximize_window>
+2512,"Let's, like, make this full screen <maximize_window>.",<maximize_window>
+2513,Make it full screen <maximize_window>.,<maximize_window>
+2514,Can we see this in full view mode <maximize_window>?,<maximize_window>
+2515,I want this to take over the screen <maximize_window>.,<maximize_window>
+2516,Make the window as large as possible <maximize_window>.,<maximize_window>
+2517,I think we should make this full screen <maximize_window> now.,<maximize_window>
+2518,Please make the active screen full size <maximize_window>.,<maximize_window>
+2519,"I need to see everything, so maximize this <maximize_window>.",<maximize_window>
+2520,Let's have a look at this in full screen <maximize_window>.,<maximize_window>
+2521,"This is too small to work with, make it full screen <maximize_window>.",<maximize_window>
+2522,Can you just make it bigger <maximize_window>?,<maximize_window>
+2523,I'd prefer this to be maximized <maximize_window>.,<maximize_window>
+2524,"Okay, um, can you make it full screen please <maximize_window>.",<maximize_window>
+2525,"The text is tiny, make the window full screen <maximize_window>.",<maximize_window>
+2526,I want to maximize this <maximize_window> so I can focus.,<maximize_window>
+2527,This really needs to be maximized <maximize_window>.,<maximize_window>
+2528,Let's just maximize this <maximize_window> and be done with it.,<maximize_window>
+2529,"Show me the big version, make it full screen <maximize_window>.",<maximize_window>
+2530,Go ahead and make this full screen <maximize_window>.,<maximize_window>
+2531,Could we make this full screen <maximize_window> so everyone can see?,<maximize_window>
+2532,I need to maximize this <maximize_window> to check the resolution.,<maximize_window>
+2533,Make this view full screen <maximize_window>.,<maximize_window>
+2534,I'm trying to make this window full screen <maximize_window>.,<maximize_window>
+2535,"Let's, you know, make this thing full screen <maximize_window>.",<maximize_window>
+2536,This should fill the entire screen <maximize_window>.,<maximize_window>
+2537,Can you make the current window full screen <maximize_window>?,<maximize_window>
+2538,I want this application to be maximized <maximize_window>.,<maximize_window>
+2539,"Let's get the full picture, make it full screen <maximize_window>.",<maximize_window>
+2540,"I need to see this larger, make it full screen <maximize_window>.",<maximize_window>
+2541,Enlarge this please <maximize_window>.,<maximize_window>
+2542,I'd like to see this in full-screen <maximize_window>.,<maximize_window>
+2543,"Okay, time to make this full screen <maximize_window>.",<maximize_window>
+2544,This needs to be maximized <maximize_window> so I can work on it.,<maximize_window>
+2545,"Please, make the window larger, I mean full screen <maximize_window>.",<maximize_window>
 2546,"Get this out of the way, minimize it <minimize_window>.",<minimize_window>
 2547,I need to minimize this <minimize_window> for a moment.,<minimize_window>
 2548,"Could you minimize this window <minimize_window>, please?",<minimize_window>
