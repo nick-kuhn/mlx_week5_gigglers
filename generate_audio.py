@@ -17,8 +17,8 @@ from pathlib import Path
 import argparse
 from tqdm import tqdm
 import time
-import random
-from pydub import AudioSegment
+import ffmpeg
+
 
 class AudioGenerator:
     def __init__(
@@ -32,7 +32,7 @@ class AudioGenerator:
             output_dir: Directory to save audio files.
         """
         self.output_dir = Path(output_dir)
-        self.output_dir.mkdir(parents=True, exist_ok=True)
+        self.output_dir.mkdir(exist_ok=True)
 
     def extract_special_token(self, sentence):
         """
@@ -59,7 +59,7 @@ class AudioGenerator:
 
     def generate_audio_filename(self, row_id, class_label):
         clean_label = class_label.replace('<', '').replace('>', '')
-        filename = f"audio_{row_id:04d}_{clean_label}.wav"
+        filename = f"audio_{row_id:04d}_{clean_label}.mp3"
         return filename
 
     def generate_audio(self, text: str, filename: str) -> tuple[bool, dict]:
@@ -67,26 +67,33 @@ class AudioGenerator:
         Generate an audio file from text using gTTS, then resample the result to 16 kHz.
         Args:
             text: The text to synthesise.
-            filename: The target WAV filename.
+            filename: The target mp3 filename.
         Returns:
             A tuple (success, info), where success is True if the file was generated (and resampled) without error.
         """
         try:
-            filepath = self.output_dir / filename
-            mp3_path = filepath.with_suffix('.mp3')
-            # Generate mp3 with gTTS
+            # Save original mp3
+            mp3_path = self.output_dir / filename
             tts = gTTS(text=text, lang='en')
             tts.save(str(mp3_path))
-            # Convert to wav and resample to 16kHz
-            audio = AudioSegment.from_file(str(mp3_path))
-            audio = audio.set_frame_rate(16000)
-            audio.export(str(filepath), format="wav")
+
+            # Resample mp3 to 16kHz mp3 using ffmpeg
+            mp3_16k_filename = filename.replace('.mp3', '_16k.mp3')
+            mp3_16k_path = self.output_dir / mp3_16k_filename
+            (
+                ffmpeg
+                .input(str(mp3_path))
+                .output(str(mp3_16k_path), ar=16000, acodec='libmp3lame')
+                .overwrite_output()
+                .run(quiet=True)
+            )
+            # Remove the original mp3, keep only 16kHz version
             os.remove(mp3_path)
-            return True, {"info": "gTTS, 16kHz"}
+            return True, {"info": "gTTS, 16kHz mp3", "audio_path": str(mp3_16k_path)}
         except Exception as e:
             print(f"Error generating {filename}: {e}")
             return False, {"info": "Error"}
-
+    
     def process_csv(self, input_csv="commands.csv", output_csv="audio_dataset.csv"):
         print(f"Processing {input_csv}...")
         print(f"Output directory: {self.output_dir}")

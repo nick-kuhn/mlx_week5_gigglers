@@ -38,5 +38,6 @@ dependencies = [
   "pyautogui>=0.9.54",
   "coqui-tts>=0.26.0",
   "gtts>=2.5.4",
+  "ffmpeg-python",
 ]
 
