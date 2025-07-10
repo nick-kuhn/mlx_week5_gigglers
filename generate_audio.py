@@ -23,7 +23,7 @@ from pydub import AudioSegment
 class AudioGenerator:
     def __init__(
         self,
-        output_dir: str = "ben_branch/data/generated_audio",
+        output_dir: str = "data/generated_audio",
     ) -> None:
         """
         Initialize the audio generator.
@@ -32,7 +32,7 @@ class AudioGenerator:
             output_dir: Directory to save audio files.
         """
         self.output_dir = Path(output_dir)
-        self.output_dir.mkdir(exist_ok=True)
+        self.output_dir.mkdir(parents=True, exist_ok=True)
 
     def extract_special_token(self, sentence):
         """
@@ -161,8 +161,8 @@ def main():
                        help='Input CSV file (default: commands.csv)')
     parser.add_argument('--output', '-o', default='audio_dataset.csv',
                        help='Output CSV file (default: audio_dataset.csv)')
-    parser.add_argument('--audio-dir', '-d', default='ben_branch/data/generated_audio',
-                       help='Directory for audio files (default: ben_branch/data/generated_audio)')
+    parser.add_argument('--audio-dir', '-d', default='data/generated_audio',
+                       help='Directory for audio files (default: data/generated_audio)')
     args = parser.parse_args()
     print("Initializing audio generator...")
     generator = AudioGenerator(
