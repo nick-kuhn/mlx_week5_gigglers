@@ -23,6 +23,7 @@ dependencies = [
   "torchaudio",
   "pyttsx3",
   "pydub",
+  "sounddevice",
   "librosa>=0.10",
   "soundfile",
   "pyttsx3>=2.90",
