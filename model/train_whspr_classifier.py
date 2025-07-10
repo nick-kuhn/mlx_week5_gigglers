@@ -15,12 +15,11 @@ sys.path.insert(0, str(PROJECT_ROOT))
 
 from model.dataset import AudioDataset, DummyDataset
 from model.model import WhisperEncoderClassifier
-from model.download_model import download_model
 
 # Global constants
 NUM_CLASSES = 10  # number of target classes
 BATCH_SIZE = 16
-EPOCHS = 10       # ← default number of epochs
+EPOCHS = 3       # ← default number of epochs
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # Base folder for the script (so paths work anywhere)
@@ -47,16 +46,6 @@ def train(data_dir: str, model_dir: str, use_dummy: bool = False, epochs: int = 
   classes     = sorted(df["class_label"].unique())
   print(f"Found {len(classes)} classes:", classes)
   label_to_idx = {cls: i for i, cls in enumerate(classes)}
-
-
-  #check if model_dir exists
-  if not os.path.exists(model_dir):
-    print(f"Model directory {model_dir} does not exist. Download model? (y/n)")
-    if input() == "y":
-      download_model(model_dir)
-    else:
-      print("Exiting...")
-      return
 
   # prepare processor and dataset
   processor = WhisperProcessor.from_pretrained(model_dir)
@@ -104,6 +93,25 @@ def train(data_dir: str, model_dir: str, use_dummy: bool = False, epochs: int = 
       pred_dist = preds.bincount(minlength=NUM_CLASSES)
       print(f"True class distribution: {true_dist}")
       print(f"Pred class distribution: {pred_dist}")
+  
+  # Save final model checkpoint
+  checkpoint_path = BASE_DIR / "model" / "final_model.pt"
+  checkpoint = {
+      'model_state_dict': model.state_dict(),
+      'optimizer_state_dict': optimizer.state_dict(),
+      'epoch': epochs,
+      'classes': classes,
+      'label_to_idx': label_to_idx,
+      'num_classes': len(classes)
+  }
+  
+  # Create model directory if it doesn't exist
+  checkpoint_path.parent.mkdir(parents=True, exist_ok=True)
+  
+  torch.save(checkpoint, checkpoint_path)
+  print(f"\Final model checkpoint saved to: {checkpoint_path}") 
+  print(f"Training completed after {epochs} epochs")
+  print(f"Final accuracy: {acc*100:.1f}%")
 
 def main():
   # detect --dummy flag for debug
