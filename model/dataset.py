@@ -11,7 +11,7 @@ class AudioDataset(Dataset):
   Simple dataset that reads .wav files and extracts labels from filenames.
   Assumes files named like someaudio_classX.wav where X is 1..NUM_CLASSES.
   """
-  def __init__(self, data_file: Path, processor: WhisperProcessor, label_map: dict):
+  def __init__(self, data_file: Path, processor: WhisperProcessor, label_map: dict, max_len: int = 2300):
 
     if data_file is None:
         data_file = Path(__file__).resolve().parent.parent / "audio_dataset.csv"
@@ -19,7 +19,7 @@ class AudioDataset(Dataset):
         raise FileNotFoundError(f"Data file {data_file} not found")
 
     # load data
-    self.data = pd.read_csv(data_file)
+    self.data = pd.read_csv(data_file).iloc[:max_len]  # limit to max_len rows
     self.filenames  = self.data["audio_path"]
     self.labels     = self.data["class_label"]
     self.processor  = processor
