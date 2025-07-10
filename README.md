@@ -121,10 +121,14 @@ Happy coding! 🚀
 python generate_audio.py
 python misc/downsample.py
 ```
-
-### Trian classifier using whisper's encoder
+### Download the model
 ```
-python ben_branch/whisper/scratch/train_whspr_classifier.py 
+python model/download_model.py 
+
+```
+### Train classifier using whisper's encoder
+```
+python model/train_whspr_classifier.py 
 ```
 
 ### TODO:

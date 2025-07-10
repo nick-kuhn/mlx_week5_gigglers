@@ -9,6 +9,7 @@ wandb/
 no_track/
 ben_branch/whisper/models/
 generated_audio
+whisper_models/
 
 
 # Byte-compiled / optimized / DLL files
