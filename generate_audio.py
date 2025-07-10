@@ -12,11 +12,11 @@ This script processes commands.csv to:
 import csv
 import os
 import re
-import time
 from gtts import gTTS
 from pathlib import Path
 import argparse
 from tqdm import tqdm
+import time
 import ffmpeg
 
 
@@ -64,46 +64,21 @@ class AudioGenerator:
 
     def generate_audio(self, text: str, filename: str) -> tuple[bool, dict]:
         """
-        Generate an audio file from text using gTTS, then resample the result to 16 kHz.
+        Generate an audio file from text using gTTS.
         Args:
             text: The text to synthesise.
             filename: The target mp3 filename.
         Returns:
-            A tuple (success, info), where success is True if the file was generated (and resampled) without error.
+            A tuple (success, info), where success is True if the file was generated without error.
         """
         try:
-            # Generate final 16kHz filename
-            mp3_16k_filename = filename.replace('.mp3', '_16k.mp3')
-            mp3_16k_path = self.output_dir / mp3_16k_filename
-            
-            # Skip if file already exists (for resuming interrupted runs)
-            if mp3_16k_path.exists():
-                print(f"Skipping existing file: {mp3_16k_filename}")
-                return True, {"info": "gTTS, 16kHz mp3 (existing)", "audio_path": str(mp3_16k_path)}
-            
-            # Add small delay to avoid rate limiting
-            time.sleep(0.1)
-            
-            # Save original mp3
+            # Save mp3 file
             mp3_path = self.output_dir / filename
-            tts = gTTS(text=text, lang='en', slow=False)  # Use fast speech
+            tts = gTTS(text=text, lang='en')
             tts.save(str(mp3_path))
-
-            # Resample mp3 to 16kHz mp3 using ffmpeg
-            (
-                ffmpeg
-                .input(str(mp3_path))
-                .output(str(mp3_16k_path), ar=16000, acodec='libmp3lame')
-                .overwrite_output()
-                .run(quiet=True)
-            )
-            # Remove the original mp3, keep only 16kHz version
-            os.remove(mp3_path)
-            return True, {"info": "gTTS, 16kHz mp3", "audio_path": str(mp3_16k_path)}
+            return True, {"info": "gTTS mp3", "audio_path": str(mp3_path)}
         except Exception as e:
             print(f"Error generating {filename}: {e}")
-            # Add longer delay on error to avoid hitting rate limits harder
-            time.sleep(1.0)
             return False, {"info": "Error"}
     
     def process_csv(self, input_csv="commands.csv", output_csv="audio_dataset.csv"):
@@ -136,7 +111,6 @@ class AudioGenerator:
             audio_filename = self.generate_audio_filename(row_id, class_label)
             success, info = self.generate_audio(clean_sentence, audio_filename)
             if success:
-                # Use the correct audio path from the generate_audio return value
                 output_row = {
                     'audio_path': info['audio_path'],
                     'original_sentence': original_sentence,
