@@ -21,7 +21,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Paths
 MODEL_DIR = BASE_DIR / "whisper_models" / "whisper_tiny"
-CHECKPOINT_PATH = BASE_DIR / "model" / "final_model.pt"
+CHECKPOINT_PATH = BASE_DIR / "model" / "best_model.pt"
 VALIDATION_DIR = BASE_DIR / "data" / "validation"
 RECORDINGS_CSV = VALIDATION_DIR / "recordings.csv"
 

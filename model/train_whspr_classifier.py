@@ -12,6 +12,12 @@ import csv
 from sklearn.metrics import f1_score
 import numpy as np
 from tqdm import tqdm
+import wandb
+import os
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 
 # Add the project root to Python path for absolute imports
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
@@ -22,7 +28,7 @@ from model.model import WhisperEncoderClassifier
 
 # Global constants
 NUM_CLASSES = 10  # number of target classes
-BATCH_SIZE = 16
+BATCH_SIZE = 128
 EPOCHS = 10       # ← default number of epochs
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -44,14 +50,30 @@ import os
 print(f'Found {len(os.listdir(DATA_DIR))} audio files')  # Ensure the data directory exists
 
 
-
 def train(data_dir: str, model_dir: str, use_dummy: bool = False, epochs: int = EPOCHS):
+  # Initialize wandb
+  wandb.init(
+      project="voice-command-classifier",
+      config={
+          "epochs": epochs,
+          "batch_size": BATCH_SIZE,
+          "learning_rate": 1e-4,
+          "model": "WhisperEncoderClassifier",
+          "dataset": "dummy" if use_dummy else "real",
+          "optimizer": "Adam",
+          "loss": "CrossEntropyLoss"
+      }
+  )
+  
   # Discover all classes by filename
   data_file = data_dir.parent.parent / "audio_dataset.csv"
   df = pd.read_csv(data_file)
   classes     = sorted(df["class_label"].unique())
   print(f"Found {len(classes)} classes:", classes)
   label_to_idx = {cls: i for i, cls in enumerate(classes)}
+
+  # Update wandb config with actual number of classes
+  wandb.config.update({"num_classes": len(classes), "classes": classes})
 
   # prepare processor and dataset
   processor = WhisperProcessor.from_pretrained(model_dir)
@@ -68,6 +90,9 @@ def train(data_dir: str, model_dir: str, use_dummy: bool = False, epochs: int = 
   criterion = nn.CrossEntropyLoss()
   optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
 
+  # Track model in wandb
+  wandb.watch(model, log="all", log_freq=10)
+
   # one epoch example
   model.train() #TODO are freezing or not currently?
   correct, seen = 0, 0
@@ -78,6 +103,8 @@ def train(data_dir: str, model_dir: str, use_dummy: bool = False, epochs: int = 
     model.train()  # ensure training mode
 
     correct, seen = 0, 0
+    epoch_loss = 0.0
+    num_batches = 0
     
     # Create progress bar for batches
     progress_bar = tqdm(loader, desc=f"Epoch {epoch}/{epochs}", 
@@ -100,15 +127,38 @@ def train(data_dir: str, model_dir: str, use_dummy: bool = False, epochs: int = 
       seen    += labels.size(0)
       acc      = correct / seen
 
+      # Track epoch loss
+      epoch_loss += loss.item()
+      num_batches += 1
+
       # Update progress bar with current metrics
       progress_bar.set_postfix({
           'loss': f'{loss.item():.4f}',
           'acc': f'{acc*100:.1f}%'
       })
     
+    # Calculate epoch averages
+    avg_epoch_loss = epoch_loss / num_batches
+    train_acc = acc
+    
     # Run validation at the end of each epoch
     val_acc, val_f1 = validate_model(model, processor, classes, label_to_idx, DEVICE)
-    print(f"🎯 Epoch {epoch} Summary - Train Acc: {acc*100:.1f}% | Val Acc: {val_acc*100:.1f}% | Val F1: {val_f1:.3f}")
+    
+    # Calculate validation loss (run validation with loss calculation)
+    val_loss = calculate_validation_loss(model, processor, classes, label_to_idx, criterion, DEVICE)
+    
+    # Log metrics to wandb
+    wandb.log({
+        "epoch": epoch,
+        "train_loss": avg_epoch_loss,
+        "train_acc": train_acc,
+        "val_loss": val_loss,
+        "val_acc": val_acc,
+        "val_f1": val_f1,
+        "best_val_f1": best_val_f1
+    })
+    
+    print(f"🎯 Epoch {epoch} Summary - Train Acc: {train_acc*100:.1f}% | Val Acc: {val_acc*100:.1f}% | Val F1: {val_f1:.3f}")
     
     # Save checkpoint if this is the best model so far
     if val_f1 > best_val_f1:
@@ -130,13 +180,20 @@ def train(data_dir: str, model_dir: str, use_dummy: bool = False, epochs: int = 
       
       torch.save(checkpoint, checkpoint_path)
       print(f"💾 New best model saved! Val F1: {val_f1:.3f} (previous best: {best_val_f1:.3f})")
+      
+      # Log model artifact to wandb
+      wandb.save(str(checkpoint_path))
+      
     else:
       print(f"📊 No improvement. Best Val F1 remains: {best_val_f1:.3f}")
   
   print(f"\n🏆 Training completed after {epochs} epochs")
   print(f"🎯 Best validation F1: {best_val_f1:.3f}")
   print(f"💾 Best model saved as: {BASE_DIR / 'model' / 'best_model.pt'}")
-  print(f"📈 Final training accuracy: {acc*100:.1f}%")
+  print(f"📈 Final training accuracy: {train_acc*100:.1f}%")
+  
+  # Finish wandb run
+  wandb.finish()
 
 ########## Functions for validation 
 def preprocess_audio(audio_path, processor):
@@ -258,6 +315,47 @@ def validate_model(model, processor, classes, label_to_idx, device):
     print(f"   Samples: {total_predictions}")
     
     return accuracy, f1
+
+def calculate_validation_loss(model, processor, classes, label_to_idx, criterion, device):
+    """Calculate validation loss"""
+    validation_data = load_validation_data(VALIDATION_CSV)
+    
+    if not validation_data:
+        return 0.0
+    
+    model.eval()
+    total_loss = 0.0
+    num_samples = 0
+    
+    with torch.no_grad():
+        for item in validation_data:
+            audio_path = item['path']
+            true_class = item['class']
+            
+            # Skip if class not in training classes
+            if true_class not in classes:
+                continue
+            
+            try:
+                # Preprocess audio
+                input_features = preprocess_audio(audio_path, processor)
+                input_features = input_features.to(device)
+                
+                # Get true label
+                true_idx = label_to_idx[true_class]
+                true_label = torch.tensor([true_idx]).to(device)
+                
+                # Run inference
+                logits = model(input_features)
+                loss = criterion(logits, true_label)
+                
+                total_loss += loss.item()
+                num_samples += 1
+                
+            except Exception as e:
+                continue
+    
+    return total_loss / num_samples if num_samples > 0 else 0.0
 
 def main():
   # detect --dummy flag for debug

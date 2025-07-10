@@ -25,6 +25,7 @@ dependencies = [
   "pydub",
   "sounddevice",
   "keyboard",
+  "python-dotenv",
   "librosa>=0.10",
   "soundfile",
   "pyttsx3>=2.90",
