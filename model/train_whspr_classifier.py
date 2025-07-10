@@ -15,7 +15,7 @@ sys.path.insert(0, str(PROJECT_ROOT))
 
 from model.dataset import AudioDataset, DummyDataset
 from model.model import WhisperEncoderClassifier
-
+from model.download_model import download_model
 
 # Global constants
 NUM_CLASSES = 10  # number of target classes
@@ -47,6 +47,15 @@ def train(data_dir: str, model_dir: str, use_dummy: bool = False):
   print(f"Found {len(classes)} classes:", classes)
   label_to_idx = {cls: i for i, cls in enumerate(classes)}
 
+
+  #check if model_dir exists
+  if not os.path.exists(model_dir):
+    print(f"Model directory {model_dir} does not exist. Download model? (y/n)")
+    if input() == "y":
+      download_model(model_dir)
+    else:
+      print("Exiting...")
+      return
 
   # prepare processor and dataset
   processor = WhisperProcessor.from_pretrained(model_dir)
