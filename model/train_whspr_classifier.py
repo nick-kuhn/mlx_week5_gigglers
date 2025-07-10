@@ -8,8 +8,13 @@ from torch import nn
 from torch.utils.data import Dataset, DataLoader
 from transformers import WhisperProcessor, WhisperModel
 import torchaudio
-from .dataset import AudioDataset, DummyDataset
-from .model import WhisperEncoderClassifier
+
+# Add the project root to Python path for absolute imports
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(PROJECT_ROOT))
+
+from model.dataset import AudioDataset, DummyDataset
+from model.model import WhisperEncoderClassifier
 
 
 # Global constants
@@ -28,6 +33,9 @@ MODEL_DIR = BASE_DIR / "whisper_models" / "whisper_tiny"
 DUMMY_ITEMS = 1000
 
 print(f"Using device: {DEVICE}, CUDA version: {torch.version.cuda}, GPU count: {torch.cuda.device_count()}")
+
+import os
+print(f'Found {len(os.listdir(DATA_DIR))} audio files')  # Ensure the data directory exists
 
 
 
