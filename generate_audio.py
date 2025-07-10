@@ -12,11 +12,11 @@ This script processes commands.csv to:
 import csv
 import os
 import re
+import time
 from gtts import gTTS
 from pathlib import Path
 import argparse
 from tqdm import tqdm
-import time
 import ffmpeg
 
 
@@ -72,14 +72,24 @@ class AudioGenerator:
             A tuple (success, info), where success is True if the file was generated (and resampled) without error.
         """
         try:
+            # Generate final 16kHz filename
+            mp3_16k_filename = filename.replace('.mp3', '_16k.mp3')
+            mp3_16k_path = self.output_dir / mp3_16k_filename
+            
+            # Skip if file already exists (for resuming interrupted runs)
+            if mp3_16k_path.exists():
+                print(f"Skipping existing file: {mp3_16k_filename}")
+                return True, {"info": "gTTS, 16kHz mp3 (existing)", "audio_path": str(mp3_16k_path)}
+            
+            # Add small delay to avoid rate limiting
+            time.sleep(0.1)
+            
             # Save original mp3
             mp3_path = self.output_dir / filename
-            tts = gTTS(text=text, lang='en')
+            tts = gTTS(text=text, lang='en', slow=False)  # Use fast speech
             tts.save(str(mp3_path))
 
             # Resample mp3 to 16kHz mp3 using ffmpeg
-            mp3_16k_filename = filename.replace('.mp3', '_16k.mp3')
-            mp3_16k_path = self.output_dir / mp3_16k_filename
             (
                 ffmpeg
                 .input(str(mp3_path))
@@ -92,6 +102,8 @@ class AudioGenerator:
             return True, {"info": "gTTS, 16kHz mp3", "audio_path": str(mp3_16k_path)}
         except Exception as e:
             print(f"Error generating {filename}: {e}")
+            # Add longer delay on error to avoid hitting rate limits harder
+            time.sleep(1.0)
             return False, {"info": "Error"}
     
     def process_csv(self, input_csv="commands.csv", output_csv="audio_dataset.csv"):
@@ -124,8 +136,9 @@ class AudioGenerator:
             audio_filename = self.generate_audio_filename(row_id, class_label)
             success, info = self.generate_audio(clean_sentence, audio_filename)
             if success:
+                # Use the correct audio path from the generate_audio return value
                 output_row = {
-                    'audio_path': str(self.output_dir / audio_filename),
+                    'audio_path': info['audio_path'],
                     'original_sentence': original_sentence,
                     'clean_sentence': clean_sentence,
                     'class_label': class_label,
