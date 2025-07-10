@@ -19,7 +19,7 @@ from model.model import WhisperEncoderClassifier
 # Global constants
 NUM_CLASSES = 10  # number of target classes
 BATCH_SIZE = 16
-EPOCHS = 3       # ← default number of epochs
+EPOCHS = 10       # ← default number of epochs
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # Base folder for the script (so paths work anywhere)
