@@ -1,5 +1,5 @@
 from pathlib import Path
-from datasets import Dataset
+from torch.utils.data import Dataset
 from transformers import WhisperProcessor
 import torch
 import torchaudio
