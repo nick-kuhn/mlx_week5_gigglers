@@ -8,6 +8,11 @@
 ## Generate Audio Dataset
 Execute `uv run generate_audio.py` to generate audio files and a csv `audio_dataset.csv` from input file `commands.csv` (this may take a bit). 
 
+## Audio Recordings
+Run `record.py` to generate more examples of voice commands by speaking into the microphone. 
+
+## Upload to database
+To push more entries to the database, run `utils/upload_to_merged.py` with option `--add_from_csv <csv_path>`. 
 
 # Environment Setup Guide
 

@@ -40,5 +40,7 @@ dependencies = [
   "coqui-tts>=0.26.0",
   "gtts>=2.5.4",
   "ffmpeg-python",
+  "keyboard>=0.13.5",
+  "audioread>=3.0.1",
 ]
 
