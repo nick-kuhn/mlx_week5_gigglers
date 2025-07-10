@@ -52,7 +52,7 @@ def train(data_dir: str, model_dir: str, use_dummy: bool = False):
   processor = WhisperProcessor.from_pretrained(model_dir)
   if use_dummy:
     # use DummyDataset for debugging without real files
-    dataset = DummyDataset(processor, n_items=DUMMY_ITEMS)
+    dataset = DummyDataset(processor, n_items=DUMMY_ITEMS, num_classes=len(classes))
     print("⚙️ Using dummy dataset with random data")
   else:
     dataset = AudioDataset(data_file, processor, label_to_idx)

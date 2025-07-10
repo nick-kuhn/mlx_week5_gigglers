@@ -36,12 +36,14 @@ class AudioDataset(Dataset):
   def __getitem__(self, idx: int) -> dict:
     file_path = self.filenames[idx]
     label     = self.labels[idx]
+    # Convert string label to integer index
+    label_idx = self.label_map[label]
     # load audio
     speech_array, sampling_rate = torchaudio.load(file_path)
     speech = speech_array.squeeze().numpy()
     # preprocess to log-Mel features
     inputs = self.processor(speech, sampling_rate=sampling_rate, return_tensors="pt")
-    return {"input_features": inputs.input_features.squeeze(0), "label": label}
+    return {"input_features": inputs.input_features.squeeze(0), "label": torch.tensor(label_idx, dtype=torch.long)}
 
   def _validate_audio_files(self):
     """Check that all audio files in the dataset exist."""
@@ -71,9 +73,10 @@ class DummyDataset(Dataset):
   FOR DEBUGGING ONLY!
   Dummy dataset that returns random log-Mel tensors and random labels for debugging.
   """
-  def __init__(self, processor: WhisperProcessor, n_items: int = 1000):
+  def __init__(self, processor: WhisperProcessor, n_items: int = 1000, num_classes: int = 10):
     self.processor = processor
     self.n_items = n_items
+    self.num_classes = num_classes
     # generate a blank log-Mel feature from 1s of white noise
     dummy_audio = torch.randn(16000)
     self.blank = processor(dummy_audio.numpy(), sampling_rate=16000, return_tensors="pt").input_features.squeeze(0)
@@ -83,5 +86,5 @@ class DummyDataset(Dataset):
 
   def __getitem__(self, idx: int) -> dict:
     fake_feats = self.blank + 0.01 * torch.randn_like(self.blank)
-    fake_label = random.randrange(NUM_CLASSES)
-    return {"input_features": fake_feats, "label": fake_label}
+    fake_label = random.randrange(self.num_classes)
+    return {"input_features": fake_feats, "label": torch.tensor(fake_label, dtype=torch.long)}
