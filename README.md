@@ -113,7 +113,16 @@ Happy coding! 🚀
 - cnn transformer
 - ensemble
 
-### Run train whisper
+# Workflow
+
+### Generate then downsample audio
+
+```
+python generate_audio.py
+python misc/downsample.py
+```
+
+### Trian classifier using whisper's encoder
 ```
 python ben_branch/whisper/scratch/train_whspr_classifier.py 
 ```
