@@ -115,12 +115,19 @@ Happy coding! 🚀
 
 # Workflow
 
-### Generate then downsample audio
+### Generate then downsample the robot audio
 
 ```
 python generate_audio.py
 python misc/downsample.py
 ```
+### Generate some real world audio from you as the human
+```
+audio_commands/record_linux.py # for linux
+record.py # for mac (windows untested)
+```
+This will save metadata to recordings.csv and audio files to data. Note the linux vs mac saves to slightly different places, so be sure to check and potentially manually merge csvs and move files.
+
 ### Download the model
 ```
 python model/download_model.py 
@@ -130,6 +137,7 @@ python model/download_model.py
 ```
 python model/train_whspr_classifier.py 
 ```
+This will run inference every epoch on 50% of the real world human data. For simplicity, at the moment it takes every other entry in metadata as validation, so the inverse entries can be sued for testing.
 
 ### TODO:
 - fix audio gen
