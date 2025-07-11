@@ -7,6 +7,11 @@ import torchaudio
 import random
 import pandas as pd
 from typing import Optional
+import io
+
+# The 'soundfile' library is used as the audio backend for HuggingFace datasets,
+# which is configured in the main training script.
+import soundfile as sf
 
 
 class AudioDataset(Dataset):
@@ -80,18 +85,23 @@ class AudioDataset(Dataset):
 
 class AudioHFDataset(Dataset):
   """
-  Dataset that loads audio files from the HF dataset using soundfile backend.
+  Dataset that loads audio files from the HF dataset.
+  This version avoids automatic decoding by HuggingFace and handles it manually
+  to bypass issues with the torchcodec backend on Windows.
   """
-  def __init__(self, processor: WhisperProcessor, label_map: dict, max_len: Optional[int] = None):
+  def __init__(self, processor: WhisperProcessor, label_map: dict, max_len: Optional[int] = None, ds: Optional[Dataset] = None):
     
-    # Load the HF dataset
-    if max_len is not None:
-        self.ds = load_dataset("ntkuhn/mlx_voice_commands_mixed", split=f"train[:{max_len}]")
-    else:
-        self.ds = load_dataset("ntkuhn/mlx_voice_commands_mixed", split="train")
+    # If a dataset is not passed in, load it from HuggingFace.
+    # Otherwise, use the one that was provided.
+    if ds is None:
+        split = f"train[:{max_len}]" if max_len is not None else "train"
+        ds = load_dataset("ntkuhn/mlx_voice_commands_mixed", split=split)
     
-    # Force soundfile backend instead of torchcodec to avoid FFmpeg4 bug
-    self.ds = self.ds.cast_column("audio", Audio(decode=True))
+    # Crucial fix: Re-cast the dataset to disable decoding on the audio feature.
+    # This creates a new dataset object with the desired (immutable) features.
+    new_features = ds.features.copy()
+    new_features['audio'] = Audio(sampling_rate=16000, decode=False)
+    self.ds = ds.cast(new_features)
     
     self.processor = processor
     self.label_map = label_map
@@ -103,16 +113,24 @@ class AudioHFDataset(Dataset):
 
   def __getitem__(self, idx: int) -> dict:
     item = self.ds[idx]
-    # Extract the decoded audio array (HF datasets provide this automatically)
-    speech_array = item["audio"]["array"]
-    sampling_rate = item["audio"]["sampling_rate"]
+    
+    # Manually decode the audio file from the in-memory bytes.
+    # This is the most robust method, avoiding filesystem path issues.
+    audio_data = item["audio"]
+    waveform, sample_rate = torchaudio.load(io.BytesIO(audio_data["bytes"]))
+
+    # Ensure audio is 16kHz as required by Whisper
+    if sample_rate != 16000:
+        resampler = torchaudio.transforms.Resample(orig_freq=sample_rate, new_freq=16000)
+        waveform = resampler(waveform)
+
     label = item["class_label"]
     
     # Convert string label to integer index
     label_idx = self.label_map[label]
     
-    # Preprocess to log-Mel features (same as AudioDataset)
-    inputs = self.processor(speech_array, sampling_rate=sampling_rate, return_tensors="pt")
+    # Preprocess to log-Mel features
+    inputs = self.processor(waveform.squeeze().numpy(), sampling_rate=16000, return_tensors="pt")
     
     return {
         "input_features": inputs.input_features.squeeze(0), 

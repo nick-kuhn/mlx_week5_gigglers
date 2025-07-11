@@ -1,3 +1,10 @@
+# Set the audio backend for HuggingFace datasets BEFORE any other imports
+# to prevent it from defaulting to torchcodec. This is crucial on systems
+# (like Windows) where torchcodec's dependencies might be missing.
+import soundfile as sf
+import datasets
+datasets.config.AUDIO_DECODE_BACKEND = "soundfile"
+
 import sys
 import random
 from pathlib import Path
@@ -15,6 +22,7 @@ from tqdm import tqdm
 import wandb
 import os
 from dotenv import load_dotenv
+from datasets import load_dataset
 
 # Load environment variables from .env file
 load_dotenv(Path(__file__).resolve().parent.parent / ".env")
@@ -69,25 +77,37 @@ def train(data_dir: str, model_dir: str, use_dummy: bool = False, from_hf: bool 
   )
   
 
-  data_file = data_dir.parent.parent / "audio_dataset.csv"
-  df = pd.read_csv(data_file)
-  classes     = sorted(df["class_label"].unique())
-  print(f"Found {len(classes)} classes:", classes)
-  label_to_idx = {cls: i for i, cls in enumerate(classes)}
-
-  # Update wandb config with actual number of classes
-  wandb.config.update({"num_classes": len(classes), "classes": classes})
-
   # prepare processor and dataset
   processor = WhisperProcessor.from_pretrained(model_dir)
+
+  # Correctly determine classes and label map based on the dataset source
   if use_dummy:
-    # use DummyDataset for debugging without real files
+    # For dummy data, create a fixed set of classes
+    classes = [f"dummy_class_{i}" for i in range(NUM_CLASSES)] # NUM_CLASSES is a global constant
+    label_to_idx = {cls: i for i, cls in enumerate(classes)}
     dataset = DummyDataset(processor, n_items=DUMMY_ITEMS, num_classes=len(classes))
     print("⚙️ Using dummy dataset with random data")
+  
   elif from_hf:
-    dataset = AudioHFDataset(processor, label_to_idx)
-  else:
+    print("Loading Hugging Face dataset to determine class labels...")
+    # Load the full dataset once to get all unique labels
+    full_ds = load_dataset("ntkuhn/mlx_voice_commands_mixed", split="train")
+    classes = sorted(full_ds.unique("class_label"))
+    label_to_idx = {cls: i for i, cls in enumerate(classes)}
+    # Pass the pre-loaded dataset to the constructor to avoid loading it twice
+    dataset = AudioHFDataset(processor, label_to_idx, ds=full_ds)
+  
+  else: # Local CSV dataset
+    data_file = data_dir.parent.parent / "audio_dataset.csv"
+    df = pd.read_csv(data_file)
+    classes = sorted(df["class_label"].unique())
+    label_to_idx = {cls: i for i, cls in enumerate(classes)}
     dataset = AudioDataset(data_file, processor, label_to_idx)
+
+  print(f"Found {len(classes)} classes:", classes)
+  # Update wandb config with actual number of classes
+  wandb.config.update({"num_classes": len(classes), "classes": classes})
+  
   print(f"Using dataset: {type(dataset)}")
   loader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=True)
 
