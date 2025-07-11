@@ -11,7 +11,7 @@ from datetime import datetime
 
 # Define the 12 command tokens
 COMMAND_TOKENS = [
-    '<close_browser>', '<google>', '<maximize_window>', '<mute>', '<no_action>', 
+    '<close_browser>', '<google>', '<maximize_window>', '<minimize_window>', '<mute>', '<no_action>', 
     '<open_browser>', '<open_notepad>', '<play_music>', '<stop_music>', 
     '<switch_window>', '<volume_down>', '<volume_up>'
 ]
@@ -161,6 +161,7 @@ class VoiceCommandRecorder:
             '<close_browser>': ["Close the browser", "Shut down browser", "Exit web browser"],
             '<google>': ["Open Google", "Search on Google", "Go to Google"],
             '<maximize_window>': ["Maximize window", "Make window bigger", "Full screen"],
+            '<minimize_window>': ["Minimize the window", "Make it smaller", "Hide the window"],
             '<mute>': ["Mute audio", "Turn off sound", "Silence"],
             '<no_action>': ["Do nothing", "No action needed", "Stay as is"],
             '<open_browser>': ["Open browser", "Launch web browser", "Start browser"],
