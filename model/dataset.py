@@ -13,7 +13,6 @@ def load_from_hf_voice_commands():
     ds = load_dataset("ntkuhn/mlx_voice_commands_mixed", split="train")   # 1. pull dataset
     df = ds.to_pandas()                                                   # 2. convert to DataFrame
     df["audio_path"]  = df["audio"].apply(lambda x: x["path"])            # 3. extract cached wav path
-    df["class_label"] = df["command_token"]                               # 4. rename for consistency
     return df[["audio_path", "class_label"]]
 
 class AudioDataset(Dataset):
