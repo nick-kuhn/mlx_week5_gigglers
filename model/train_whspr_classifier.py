@@ -62,13 +62,20 @@ except FileNotFoundError:
 def create_weighted_sampler(dataset, recording_weight=4.0, generated_weight=1.0):
     """Create weighted sampler for upsampling recording samples."""
     weights = []
+    print(f"📊 Creating weighted sampler for {len(dataset)} samples...")
+    
+    # Access the underlying HuggingFace dataset directly to avoid processing audio
     for i in range(len(dataset)):
-        sample = dataset[i]
-        sample_type = sample.get('sample_type', 'unknown')
+        item = dataset.ds[i]  # Access raw dataset item without processing
+        sample_type = item.get('type', 'unknown')
         if sample_type == 'recording':
             weights.append(recording_weight)
         else:
             weights.append(generated_weight)
+    
+    recording_count = sum(1 for w in weights if w == recording_weight)
+    generated_count = sum(1 for w in weights if w == generated_weight)
+    print(f"📊 Weighted sampler created: {recording_count} recordings (weight={recording_weight}), {generated_count} generated (weight={generated_weight})")
     
     return WeightedRandomSampler(
         weights=weights,
