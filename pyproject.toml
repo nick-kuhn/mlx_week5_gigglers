@@ -26,6 +26,8 @@ dependencies = [
   "sounddevice",
   "keyboard",
   "python-dotenv",
+  "openai_whisper",
+  "pynput",
   "librosa>=0.10",
   "soundfile",
   "pyttsx3>=2.90",

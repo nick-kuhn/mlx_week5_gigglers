@@ -1,38 +1,252 @@
-import sounddevice as sd
-import soundfile as sf
+import numpy as np
 import torch
-import whisper
+import sys
+from pathlib import Path
 from pynput import keyboard
 import time
 import os
 import webbrowser
 import pyautogui
 import subprocess
+import tempfile
+import signal
+import threading
+import whisper
+#import openai_whisper as whisper
 
-# Load your fine-tuned model
-model = whisper.load_model("tiny")  # Use the *same* architecture as you trained
-model.load_state_dict(torch.load("best_model.pth", map_location="cpu"))
-model.eval()
-recording = False
 
-def record(filename="latestcommand.wav", duration=5, samplerate=16000):
-    print("Recording...")
-    audio = sd.rec(int(duration * samplerate), samplerate=samplerate, channels=1)
-    sd.wait()
-    sf.write(filename, audio, samplerate)
-    print(f"Saved to {filename}")
-    return filename
+# Add project root to path for model loading
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(PROJECT_ROOT))
 
-def transcribe(path):
-    audio = whisper.load_audio(path)
-    audio = whisper.pad_or_trim(audio)
+# Try to import your custom model
+try:
+    from model.model import WhisperEncoderClassifier
+    USE_CUSTOM_MODEL = True
+except ImportError:
+    print("⚠️  Custom model not found, using base Whisper")
+    USE_CUSTOM_MODEL = False
+
+# Detect available audio recording methods
+def detect_audio_backend():
+    """Detect which audio recording backend is available"""
+    try:
+        import sounddevice as sd
+        # Try to query devices to see if PortAudio is working
+        sd.query_devices()
+        print("✅ PortAudio (sounddevice) available")
+        return "portaudio"
+    except (ImportError, Exception) as e:
+        print(f"❌ PortAudio not available: {e}")
+    
+    try:
+        # Check if ffmpeg is available
+        result = subprocess.run(['ffmpeg', '-version'], 
+                              capture_output=True, text=True, timeout=5)
+        if result.returncode == 0:
+            print("✅ ffmpeg available")
+            return "ffmpeg"
+    except (FileNotFoundError, subprocess.TimeoutExpired):
+        print("❌ ffmpeg not available")
+    
+    raise RuntimeError("No audio recording backend available. Please install either PortAudio (sounddevice) or ffmpeg.")
+
+# Initialize audio backend
+AUDIO_BACKEND = detect_audio_backend()
+print(f"🎤 Using audio backend: {AUDIO_BACKEND}")
+
+# Load model (either custom trained model or base Whisper)
+DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+if USE_CUSTOM_MODEL:
+    try:
+        # Try to load your custom trained model
+        from transformers import WhisperProcessor
+        
+        # Paths for custom model
+        MODEL_DIR = PROJECT_ROOT / "whisper_models" / "whisper_tiny"
+        CHECKPOINT_PATH = PROJECT_ROOT / "model" / "api_net.pt"
+        
+        if CHECKPOINT_PATH.exists():
+            print("🔧 Loading custom trained model...")
+            checkpoint = torch.load(CHECKPOINT_PATH, map_location=DEVICE)
+            classes = checkpoint['classes']
+            label_to_idx = checkpoint['label_to_idx']
+            idx_to_label = {v: k for k, v in label_to_idx.items()}
+            
+            # Initialize processor and model
+            processor = WhisperProcessor.from_pretrained(MODEL_DIR)
+            model = WhisperEncoderClassifier(MODEL_DIR, num_classes=len(classes)).to(DEVICE)
+            model.load_state_dict(checkpoint['model_state_dict'])
+            model.eval()
+            
+            print(f"✅ Custom model loaded with {len(classes)} classes")
+            USE_CUSTOM_INFERENCE = True
+        else:
+            print(f"⚠️  Custom model not found at {CHECKPOINT_PATH}, using base Whisper")
+            USE_CUSTOM_INFERENCE = False
+    except Exception as e:
+        print(f"⚠️  Error loading custom model: {e}, using base Whisper")
+        USE_CUSTOM_INFERENCE = False
+else:
+    USE_CUSTOM_INFERENCE = False
+
+if not USE_CUSTOM_INFERENCE:
+    # Load base Whisper model
+    print("🔧 Loading base Whisper model...")
+    model = whisper.load_model("tiny").to(DEVICE)
+    print("✅ Base Whisper model loaded")
+
+fs = 16000  # Sample rate
+channels = 1
+
+# Audio recording variables (different for each backend)
+if AUDIO_BACKEND == "portaudio":
+    import sounddevice as sd
+    audio = []
+    recording = False
+    stream = None
+    audio_lock = threading.Lock()
+else:  # ffmpeg backend
+    recording = False
+    recording_process = None
+    temp_audio_file = None
+    audio_lock = threading.Lock()
+
+# PortAudio recording functions
+if AUDIO_BACKEND == "portaudio":
+    def audio_callback(indata, frames, t, status):
+        global audio, recording
+        if recording:
+            with audio_lock:
+                audio.append(indata.copy())
+
+    def start_recording():
+        global audio, recording, stream, audio_lock
+        audio = []
+        recording = True
+        stream = sd.InputStream(samplerate=fs, channels=channels, callback=audio_callback)
+        stream.start()
+        print("Recording... (hold SPACE)")
+
+    def stop_recording():
+        global recording, stream, audio
+        recording = False
+        time.sleep(0.2)  # Let buffer clear
+        stream.stop()
+        stream.close()
+        with audio_lock:
+            if len(audio) == 0:
+                print("No audio captured!")
+                return None
+            audio_np = np.concatenate(audio, axis=0)
+        print(f"Captured {len(audio_np)} audio samples")
+        return audio_np
+
+# ffmpeg recording functions
+else:
+    def start_recording():
+        global recording, recording_process, temp_audio_file
+        with audio_lock:
+            recording = True
+            # Create temporary file for audio
+            temp_audio_file = tempfile.NamedTemporaryFile(suffix='.wav', delete=False)
+            temp_audio_file.close()
+            
+            # Start ffmpeg recording
+            cmd = [
+                'ffmpeg', '-f', 'alsa', '-i', 'default',
+                '-ar', str(fs), '-ac', str(channels),
+                '-y', temp_audio_file.name
+            ]
+            recording_process = subprocess.Popen(
+                cmd, 
+                stdout=subprocess.DEVNULL, 
+                stderr=subprocess.DEVNULL,
+                stdin=subprocess.DEVNULL
+            )
+        print("Recording... (hold SPACE)")
+
+    def stop_recording():
+        global recording, recording_process, temp_audio_file
+        with audio_lock:
+            if not recording or recording_process is None:
+                return None
+                
+            recording = False
+            
+            # Stop ffmpeg gracefully
+            recording_process.send_signal(signal.SIGINT)
+            recording_process.wait()
+            
+            # Read the recorded audio file
+            try:
+                import librosa
+                audio_np, _ = librosa.load(temp_audio_file.name, sr=fs, mono=True)
+                
+                # Clean up temporary file
+                os.unlink(temp_audio_file.name)
+                
+                if len(audio_np) == 0:
+                    print("No audio captured!")
+                    return None
+                    
+                print(f"Captured {len(audio_np)} audio samples")
+                return audio_np
+                
+            except ImportError:
+                print("❌ librosa not available for audio loading. Please install: pip install librosa")
+                return None
+            except Exception as e:
+                print(f"❌ Error reading audio file: {e}")
+                # Clean up on error
+                try:
+                    os.unlink(temp_audio_file.name)
+                except:
+                    pass
+                return None
+
+def transcribe_audio_np(audio_np, fs):
+    """Transcribe audio using either custom model or base Whisper"""
+    # If 2D, make 1D (whisper expects shape (samples,))
+    if audio_np.ndim > 1:
+        audio_np = audio_np.flatten()
+    audio_np = audio_np.astype(np.float32)
+    
+    if USE_CUSTOM_INFERENCE:
+        # Use custom trained model
+        try:
+            # Preprocess audio with Whisper processor
+            inputs = processor(
+                audio_np, 
+                sampling_rate=fs, 
+                return_tensors="pt"
+            )
+            input_features = inputs["input_features"].to(DEVICE)
+            
+            # Run inference
+            with torch.no_grad():
+                logits = model(input_features)
+                predicted_idx = logits.argmax(dim=1).item()
+                predicted_class = idx_to_label[predicted_idx]
+            
+            print(f"🎯 Custom model prediction: {predicted_class}")
+            return predicted_class.replace('<', '').replace('>', '')  # Remove brackets for command matching
+            
+        except Exception as e:
+            print(f"❌ Error with custom model, falling back to base Whisper: {e}")
+            # Fall back to base Whisper
+            pass
+    
+    # Use base Whisper model
+    # Whisper's pad_or_trim expects 16,000 Hz
+    audio = whisper.pad_or_trim(audio_np)
     mel = whisper.log_mel_spectrogram(audio).to(model.device)
     options = whisper.DecodingOptions(language="en", without_timestamps=True)
     result = whisper.decode(model, mel, options)
     return result.text.lower()
 
 # ----- Command Handlers -----
-
 def open_spotify(song=None):
     print("Opening Spotify...")
     os.system("open -a Spotify")
@@ -42,11 +256,24 @@ def open_spotify(song=None):
         print(f"Searched for song: {song}")
 
 def open_notes(note=None):
-    print("Opening Notes...")
-    os.system("open -a Notes")
     if note:
-        print(f"Writing note: {note}")
-        # To automate note writing, use AppleScript (macOS only), or pyautogui
+        add_quick_note_mac(note)
+    else:
+        print("Opening Notes...")
+        os.system("open -a Notes")
+
+def add_quick_note_mac(note):
+    import subprocess
+    # AppleScript: create and focus the new note
+    applescript = f'''
+    tell application "Notes"
+        activate
+        set theNote to make new note at folder "Notes" of account "iCloud" with properties {{name:"Quick Note", body:"{note}"}}
+        show theNote
+    end tell
+    '''
+    print("Creating and focusing a quick note in the Notes app...")
+    subprocess.run(['osascript', '-e', applescript])
 
 def open_calendar():
     print("Opening Calendar...")
@@ -77,81 +304,178 @@ def ask_chatgpt_auto(prompt):
 
 def take_screenshot():
     print("Taking screenshot...")
-    # macOS screenshot command
     os.system("screencapture -x ~/Desktop/voice_screenshot.png")
     print("Screenshot saved to Desktop.")
 
-def open_email():
-    print("Opening Mail app...")
-    os.system("open -a Mail")
-    # To automate writing an email, you'd need more scripting or pyautogui
+def open_gmail_email(prompt=None):
+    url = "https://mail.google.com/"
+    print("Opening Gmail in your default browser...")
+    webbrowser.open(url)
+    if prompt:
+        print("Wait a few seconds for Gmail to load, then click in the compose box!")
+        for i in range(4, 0, -1):
+            print(f"Typing in {i}...", end="\r")
+            time.sleep(1)
+        pyautogui.typewrite(prompt)
+        print("\nPrompt typed as email body.")
 
-def mute_unmute():
-    print("Toggling mute/unmute...")
-    # macOS mute using AppleScript
-    os.system("""osascript -e 'set volume output muted not (output muted of (get volume settings))'""")
+def mute_audio():
+    print("Muting audio...")
+    os.system("""osascript -e 'set volume output muted true'""")
+
+def unmute_audio():
+    print("Unmuting audio...")
+    os.system("""osascript -e 'set volume output muted false'""")
 
 def lock_computer():
-    print("Locking computer...")
-    os.system('/System/Library/CoreServices/Menu\\ Extras/User.menu/Contents/Resources/CGSession -suspend')
+    """Lock the computer (works on Linux and macOS)"""
+    try:
+        # Try Linux first (most common)
+        if os.system("which gnome-screensaver-command > /dev/null 2>&1") == 0:
+            os.system("gnome-screensaver-command -l")
+            print("Computer locked (GNOME)")
+        elif os.system("which xdg-screensaver > /dev/null 2>&1") == 0:
+            os.system("xdg-screensaver lock")
+            print("Computer locked (XDG)")
+        elif os.system("which loginctl > /dev/null 2>&1") == 0:
+            os.system("loginctl lock-session")
+            print("Computer locked (systemd)")
+        # macOS fallback
+        elif os.system("which pmset > /dev/null 2>&1") == 0:
+            os.system("pmset displaysleepnow")
+            print("Display locked (macOS)")
+        else:
+            print("Unable to lock computer - no supported lock command found")
+    except Exception as e:
+        print(f"Error locking computer: {e}")
 
 # ----- Main Command Dispatcher -----
-
 def handle_command(command):
     print("Recognized:", command)
     command = command.strip()
 
-    # 1. Spotify
+    # Handle custom model commands (specific tokens)
+    if USE_CUSTOM_INFERENCE:
+        # Map custom model outputs to actions
+        if command in ["close_browser", "close browser"]:
+            print("Closing browser...")
+            # Add browser closing logic here
+            return
+        elif command in ["google", "search"]:
+            print("Opening Google...")
+            google_search("")
+            return
+        elif command in ["maximize_window", "maximize window"]:
+            print("Maximizing window...")
+            # Add window maximizing logic here
+            return
+        elif command in ["mute"]:
+            mute_audio()
+            return
+        elif command in ["no_action"]:
+            print("No action taken")
+            return
+        elif command in ["open_browser", "open browser"]:
+            print("Opening browser...")
+            webbrowser.open("https://www.google.com")
+            return
+        elif command in ["open_notepad", "open notepad"]:
+            open_notes()
+            return
+        elif command in ["play_music", "play music"]:
+            open_spotify()
+            return
+        elif command in ["stop_music", "stop music"]:
+            print("Stopping music...")
+            # Add music stopping logic here
+            return
+        elif command in ["switch_window", "switch window"]:
+            print("Switching window...")
+            # Add window switching logic (Alt+Tab equivalent)
+            try:
+                pyautogui.hotkey('alt', 'tab')
+            except:
+                print("Could not switch window")
+            return
+        elif command in ["volume_down", "volume down"]:
+            print("Volume down...")
+            # Add volume down logic here
+            return
+        elif command in ["volume_up", "volume up"]:
+            print("Volume up...")
+            # Add volume up logic here
+            return
+
+    # Handle natural language commands (base Whisper)
     if command.startswith("open spotify"):
         song = command.replace("open spotify", "").replace("and play", "").strip()
         open_spotify(song)
-    # 2. Notes
-    elif command.startswith("open notes") or command.startswith("take a note"):
-        note = command.replace("open notes", "").replace("take a note", "").strip()
+    elif command.startswith("open notes and write down"):
+        note = command.replace("open notes and write down", "").strip()
         open_notes(note)
-    # 3. Calendar
+    elif command.startswith("open notes"):
+        open_notes()  # Just open Notes, no text writing
+    elif command.startswith("take a note"):
+        note = command.replace("take a note", "").strip()
+        open_notes(note)
     elif command.startswith("open calendar"):
         open_calendar()
-    # 4. Google search
-    elif command.startswith("google") or command.startswith("search"):
-        # Accepts "google cats" or "search cats"
-        query = command.replace("google", "").replace("search", "").strip()
+    elif command.startswith("open google and search"):
+        query = command.replace("open google and search", "").strip()
         google_search(query)
-    # 5. Maps
+    elif command.startswith("google"):
+        query = command.replace("google", "").strip()
+        google_search(query)
+    elif command.startswith("search"):
+        query = command.replace("search", "").strip()
+        google_search(query)
+    elif command.startswith("open maps and search"):
+        destination = command.replace("open maps and search", "").strip()
+        open_maps(destination)
     elif command.startswith("open maps") or command.startswith("maps"):
         destination = command.replace("open maps", "").replace("maps", "").strip()
         open_maps(destination)
-    # 6. ChatGPT
     elif command.startswith("ask chatgpt"):
         prompt = command.replace("ask chatgpt", "").strip()
         ask_chatgpt_auto(prompt)
-    # 7. Screenshot
     elif "screenshot" in command:
         take_screenshot()
-    # 8. Email
-    elif command.startswith("open email") or command.startswith("write an email") or command.startswith("open mail"):
-        open_email()
-    # 9. Mute/unmute
+    elif command.startswith("open gmail and write an email saying"):
+        prompt = command.replace("open gmail and write an email saying", "").strip()
+        open_gmail_email(prompt)
+    elif "unmute" in command:
+        unmute_audio()
     elif "mute" in command:
-        mute_unmute()
-    # 10. Lock computer
+        mute_audio()
     elif command.startswith("lock"):
         lock_computer()
     else:
         print("No recognized command.")
 
 # ----- Keyboard Listener -----
-
 def on_press(key):
-    global recording
-    if key == keyboard.Key.ctrl and not recording:
-        recording = True
-        filename = record(duration=5)
-        command = transcribe(filename)
-        handle_command(command)
-        recording = False
+    if key == keyboard.Key.space and not getattr(on_press, "is_recording", False):
+        on_press.is_recording = True
+        start_recording()
+
+def on_release(key):
+    if key == keyboard.Key.space and getattr(on_press, "is_recording", False):
+        on_press.is_recording = False
+        audio_np = stop_recording()
+        if audio_np is not None:
+            command = transcribe_audio_np(audio_np, fs)
+            handle_command(command)
+    if key == keyboard.Key.esc:
+        # Stop listener
+        return False
 
 if __name__ == "__main__":
-    print("Hold down CTRL to issue a command.")
-    with keyboard.Listener(on_press=on_press) as listener:
+    print("Hold SPACE to record. Release to stop and transcribe. Press ESC to quit.")
+    print(f"Audio backend: {AUDIO_BACKEND}")
+    
+    if AUDIO_BACKEND == "ffmpeg":
+        print("📋 Note: Using ffmpeg backend. Make sure your microphone is set as default ALSA device.")
+        print("📋 You may need to install librosa: pip install librosa")
+    
+    with keyboard.Listener(on_press=on_press, on_release=on_release) as listener:
         listener.join()

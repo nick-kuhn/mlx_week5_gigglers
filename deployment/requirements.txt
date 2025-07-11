@@ -1,0 +1,28 @@
+# Requirements for deployment scripts
+
+# Core dependencies
+torch
+numpy
+pynput
+transformers  # needed for WhisperProcessor and custom model
+
+# Audio backends (install one of these)
+# Option 1: PortAudio backend (recommended for most systems)
+sounddevice
+
+# Option 2: ffmpeg backend (for systems without PortAudio)
+librosa  # needed for audio file loading with ffmpeg backend
+
+# Whisper (choose one)
+# Option 1: OpenAI Whisper
+openai-whisper
+
+# Option 2: Faster Whisper (alternative)
+# faster-whisper
+
+# Additional dependencies for automation
+pyautogui
+
+# Installation commands:
+# For PortAudio backend: pip install torch numpy pynput transformers sounddevice openai-whisper pyautogui
+# For ffmpeg backend: pip install torch numpy pynput transformers librosa openai-whisper pyautogui
