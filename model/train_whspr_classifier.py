@@ -47,8 +47,11 @@ DUMMY_ITEMS = 1000
 print(f"Using device: {DEVICE}, CUDA version: {torch.version.cuda}, GPU count: {torch.cuda.device_count()}")
 
 import os
-print(f'Found {len(os.listdir(DATA_DIR))} audio files')  # Ensure the data directory exists
 
+try
+   print(f'Found {len(os.listdir(DATA_DIR))} audio files')  # Ensure the data directory exists
+except FileNotFoundError:
+    print(f"Data directory not found: {DATA_DIR}, proceeding anyway.")
 
 def train(data_dir: str, model_dir: str, use_dummy: bool = False, from_hf: bool = False, epochs: int = EPOCHS):
   # Initialize wandb

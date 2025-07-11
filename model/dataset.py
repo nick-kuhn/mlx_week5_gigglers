@@ -31,7 +31,7 @@ class AudioDataset(Dataset):
     # load data
     
     if from_hf:
-      self.data = load_from_hf()
+      self.data = load_from_hf_voice_commands()
     else:
       self.data = pd.read_csv(data_file)
 
