@@ -94,6 +94,10 @@ class AudioAugmentations:
         """Randomly shift pitch by semitones."""
         if random.random() > self.config["pitch_shift"]["prob"]:
             return wav
+        
+        # Skip augmentation for very short samples (less than 0.2 seconds)
+        if len(wav) < 0.2 * self.sample_rate:
+            return wav
             
         n_steps_range = self.config["pitch_shift"]["n_steps"]
         n_steps = random.uniform(n_steps_range[0], n_steps_range[1])
@@ -111,6 +115,10 @@ class AudioAugmentations:
     def time_stretch(self, wav: np.ndarray) -> np.ndarray:
         """Randomly speed up or slow down audio."""
         if random.random() > self.config["time_stretch"]["prob"]:
+            return wav
+        
+        # Skip augmentation for very short samples (less than 0.2 seconds)
+        if len(wav) < 0.2 * self.sample_rate:
             return wav
             
         rate_range = self.config["time_stretch"]["rate"]
