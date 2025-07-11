@@ -91,25 +91,60 @@ def train(data_dir: str, model_dir: str, use_dummy: bool = False, from_hf: bool 
   elif from_hf:
     print("Loading Hugging Face dataset to determine class labels...")
     # Load the full dataset once to get all unique labels
-    full_ds = load_dataset("ntkuhn/mlx_voice_commands_mixed", split="train")
-    classes = sorted(full_ds.unique("class_label"))
+    hf_dataset = load_dataset("ntkuhn/mlx_voice_commands_mixed")
+    train_ds = hf_dataset['train']
+    val_ds = hf_dataset['validation']
+    
+    classes = sorted(train_ds.unique("class_label"))
     label_to_idx = {cls: i for i, cls in enumerate(classes)}
-    # Pass the pre-loaded dataset to the constructor to avoid loading it twice
-    dataset = AudioHFDataset(processor, label_to_idx, ds=full_ds)
-  
+    
+    # Create the training dataset
+    dataset = AudioHFDataset(processor, label_to_idx, ds=train_ds)
+    
+    # Create the validation dataset
+    val_dataset = AudioHFDataset(processor, label_to_idx, ds=val_ds)
+
   else: # Local CSV dataset
     data_file = data_dir.parent.parent / "audio_dataset.csv"
     df = pd.read_csv(data_file)
     classes = sorted(df["class_label"].unique())
     label_to_idx = {cls: i for i, cls in enumerate(classes)}
     dataset = AudioDataset(data_file, processor, label_to_idx)
+    
+    # Create a local validation dataset
+    # Note: This uses the old manual loading inside run_validation.
+    # To use a DataLoader, we would need to create a new Dataset class for validation data.
+    # For now, we'll create a simple one.
+    val_df = pd.read_csv(VALIDATION_CSV)
+    # Filter out classes not in the training set
+    val_df = val_df[val_df['command_token'].isin(classes)]
+    # Rename for consistency
+    val_df = val_df.rename(columns={'filename': 'audio_path', 'command_token': 'class_label'})
+    val_dataset = AudioDataset(None, processor, label_to_idx) # Pass processor and map
+    val_dataset.data = val_df # Manually set the data
+    val_dataset.filenames = val_df['audio_path']
+    val_dataset.labels = val_df['class_label']
 
   print(f"Found {len(classes)} classes:", classes)
   # Update wandb config with actual number of classes
   wandb.config.update({"num_classes": len(classes), "classes": classes})
   
   print(f"Using dataset: {type(dataset)}")
-  loader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=True, num_workers=4)
+  loader = DataLoader(
+      dataset, 
+      batch_size=BATCH_SIZE, 
+      shuffle=True, 
+      num_workers=4, 
+      pin_memory=True  # Speeds up CPU-to-GPU data transfer
+  )
+  
+  val_loader = DataLoader(
+      val_dataset,
+      batch_size=BATCH_SIZE * 2, # Can use a larger batch size for validation
+      shuffle=False,
+      num_workers=4,
+      pin_memory=True
+  )
 
   # build model, loss, optimizer
   model = WhisperEncoderClassifier(model_dir, num_classes=len(classes)).to(DEVICE)
@@ -137,8 +172,8 @@ def train(data_dir: str, model_dir: str, use_dummy: bool = False, from_hf: bool 
                        unit="batch", leave=False)
     
     for batch in progress_bar:
-      inputs  = batch["input_features"].to(DEVICE)
-      labels  = batch["label"].to(DEVICE)
+      inputs  = batch["input_features"].to(DEVICE, non_blocking=True)
+      labels  = batch["label"].to(DEVICE, non_blocking=True)
 
       logits  = model(inputs)
       loss    = criterion(logits, labels)
@@ -168,10 +203,7 @@ def train(data_dir: str, model_dir: str, use_dummy: bool = False, from_hf: bool 
     train_acc = acc
     
     # Run validation at the end of each epoch
-    val_acc, val_f1 = validate_model(model, processor, classes, label_to_idx, DEVICE)
-    
-    # Calculate validation loss (run validation with loss calculation)
-    val_loss = calculate_validation_loss(model, processor, classes, label_to_idx, criterion, DEVICE)
+    val_acc, val_f1, val_loss = run_validation(model, criterion, val_loader, DEVICE)
     
     # Log metrics to wandb
     wandb.log({
@@ -222,166 +254,48 @@ def train(data_dir: str, model_dir: str, use_dummy: bool = False, from_hf: bool 
   wandb.finish()
 
 ########## Functions for validation 
-def preprocess_audio(audio_path, processor):
-    """Preprocess audio file for validation"""
-    # Load audio
-    waveform, sample_rate = torchaudio.load(audio_path)
-    
-    # Convert to mono if stereo
-    if waveform.shape[0] > 1:
-        waveform = waveform.mean(dim=0, keepdim=True)
-    
-    # Resample to 16kHz if needed
-    if sample_rate != 16000:
-        resampler = torchaudio.transforms.Resample(sample_rate, 16000)
-        waveform = resampler(waveform)
-    
-    # Convert to numpy and squeeze
-    audio_array = waveform.squeeze().numpy()
-    
-    # Process with Whisper processor
-    inputs = processor(
-        audio_array, 
-        sampling_rate=16000, 
-        return_tensors="pt"
-    )
-    
-    return inputs["input_features"]
-
-def load_validation_data(validation_csv_path, take_every_nth=2):
-    """Load validation data from CSV, taking every nth item"""
-    recordings = []
-    
-    if not validation_csv_path.exists():
-        print(f"⚠️  Validation CSV not found: {validation_csv_path}")
-        return recordings
-    
-    with open(validation_csv_path, 'r', encoding='utf-8') as f:
-        reader = csv.DictReader(f)
-        all_records = list(reader)
-    
-    # Take every nth item for validation
-    validation_records = all_records[::take_every_nth]
-    
-    for record in validation_records:
-        filename = Path(record['filename']).name
-        command_token = record['command_token']
-        file_path = VALIDATION_DIR / filename
-        
-        if file_path.exists():
-            recordings.append({
-                'path': file_path,
-                'class': command_token
-            })
-    
-    print(f"📄 Loaded {len(recordings)} validation samples (every {take_every_nth}th from {len(all_records)} total)")
-    return recordings
-
-def validate_model(model, processor, classes, label_to_idx, device):
-    """Run validation on real-world data"""
+def run_validation(model, criterion, val_loader, device):
+    """Run validation, calculating accuracy, F1, and loss in a single pass."""
     print("\n🔍 Running validation...")
-    
-    # Load validation data
-    validation_data = load_validation_data(VALIDATION_CSV)
-    
-    if not validation_data:
-        print("⚠️  No validation data found")
-        return 0.0, 0.0
-    
     model.eval()
-    correct_predictions = 0
-    total_predictions = 0
+    
+    # The old load_validation_data and preprocess_audio are no longer needed
+    # as the DataLoader handles this.
     
     all_true_labels = []
     all_pred_labels = []
+    total_loss = 0.0
     
     with torch.no_grad():
-        for item in validation_data:
-            audio_path = item['path']
-            true_class = item['class']
+        for batch in val_loader:
+            inputs = batch["input_features"].to(device, non_blocking=True)
+            labels = batch["label"].to(device, non_blocking=True)
             
-            # Skip if class not in training classes
-            if true_class not in classes:
-                continue
+            # Run inference
+            logits = model(inputs)
             
-            try:
-                # Preprocess audio
-                input_features = preprocess_audio(audio_path, processor)
-                input_features = input_features.to(device)
-                
-                # Run inference
-                logits = model(input_features)
-                predicted_idx = logits.argmax(dim=1).item()
-                predicted_class = classes[predicted_idx]
-                
-                # Get true label index
-                true_idx = label_to_idx[true_class]
-                
-                # Check if prediction is correct
-                is_correct = predicted_idx == true_idx
-                if is_correct:
-                    correct_predictions += 1
-                total_predictions += 1
-                
-                # Store for F1 calculation
-                all_true_labels.append(true_idx)
-                all_pred_labels.append(predicted_idx)
-                
-            except Exception as e:
-                print(f"⚠️  Error processing {audio_path.name}: {str(e)}")
-                continue
-    
-    # Calculate metrics
-    accuracy = correct_predictions / total_predictions if total_predictions > 0 else 0.0
-    f1 = f1_score(all_true_labels, all_pred_labels, average='weighted') if len(all_true_labels) > 0 else 0.0
+            # Calculate loss
+            loss = criterion(logits, labels)
+            total_loss += loss.item()
+            
+            # For metrics
+            predicted_indices = logits.argmax(dim=1)
+            all_true_labels.extend(labels.cpu().numpy())
+            all_pred_labels.extend(predicted_indices.cpu().numpy())
+            
+    # Calculate final metrics
+    num_samples = len(all_true_labels)
+    accuracy = (np.array(all_pred_labels) == np.array(all_true_labels)).mean() if num_samples > 0 else 0.0
+    f1 = f1_score(all_true_labels, all_pred_labels, average='weighted', zero_division=0) if num_samples > 0 else 0.0
+    avg_loss = total_loss / len(val_loader) if len(val_loader) > 0 else 0.0
     
     print(f"📊 Validation Results:")
     print(f"   Accuracy: {accuracy:.3f} ({accuracy*100:.1f}%)")
     print(f"   F1 Score: {f1:.3f}")
-    print(f"   Samples: {total_predictions}")
+    print(f"   Loss: {avg_loss:.4f}")
+    print(f"   Samples: {num_samples}")
     
-    return accuracy, f1
-
-def calculate_validation_loss(model, processor, classes, label_to_idx, criterion, device):
-    """Calculate validation loss"""
-    validation_data = load_validation_data(VALIDATION_CSV)
-    
-    if not validation_data:
-        return 0.0
-    
-    model.eval()
-    total_loss = 0.0
-    num_samples = 0
-    
-    with torch.no_grad():
-        for item in validation_data:
-            audio_path = item['path']
-            true_class = item['class']
-            
-            # Skip if class not in training classes
-            if true_class not in classes:
-                continue
-            
-            try:
-                # Preprocess audio
-                input_features = preprocess_audio(audio_path, processor)
-                input_features = input_features.to(device)
-                
-                # Get true label
-                true_idx = label_to_idx[true_class]
-                true_label = torch.tensor([true_idx]).to(device)
-                
-                # Run inference
-                logits = model(input_features)
-                loss = criterion(logits, true_label)
-                
-                total_loss += loss.item()
-                num_samples += 1
-                
-            except Exception as e:
-                continue
-    
-    return total_loss / num_samples if num_samples > 0 else 0.0
+    return accuracy, f1, avg_loss
 
 def main():
   parser = argparse.ArgumentParser()
