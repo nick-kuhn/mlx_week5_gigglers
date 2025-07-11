@@ -109,7 +109,7 @@ def train(data_dir: str, model_dir: str, use_dummy: bool = False, from_hf: bool 
   wandb.config.update({"num_classes": len(classes), "classes": classes})
   
   print(f"Using dataset: {type(dataset)}")
-  loader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=True)
+  loader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=True, num_workers=4)
 
   # build model, loss, optimizer
   model = WhisperEncoderClassifier(model_dir, num_classes=len(classes)).to(DEVICE)
