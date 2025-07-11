@@ -1,0 +1,331 @@
+filename,transcription
+ask_chatgpt_001.wav,ask chatgpt what two plus two is
+ask_chatgpt_002.wav,ask chatgpt recommend a movie for a rainy day
+ask_chatgpt_003.wav,ask chatgpt who is the tallest NBA player
+ask_chatgpt_004.wav,ask chatgpt how do I change my Wi-Fi password
+ask_chatgpt_005.wav,ask chatgpt what time is sunset in London today
+ask_chatgpt_006.wav,ask chatgpt to translate good night into Japanese
+ask_chatgpt_007.wav,ask chatgpt why do leaves change color in autumn
+ask_chatgpt_008.wav,ask chatgpt
+ask_chatgpt_009.wav,ask chat gpt
+ask_chatgpt_010.wav,ask chatgpt what are the symptoms of dehydration
+ask_chatgpt_011.wav,ask chatgpt give me three tips to stay focused while studying
+ask_chatgpt_012.wav,ask chatgpt which countries have hosted the Olympics the most times
+ask_chatgpt_013.wav,ask chatgpt how long does it take to fly from New York to Sydney
+ask_chatgpt_014.wav,ask chatgpt explain how solar panels generate electricity in simple words
+ask_chatgpt_015.wav,ask chatgpt what’s the difference between a crocodile and an alligator
+ask_chatgpt_016.wav,ask chatgpt tell me about the process of photosynthesis in plants
+ask_chatgpt_017.wav,ask chatgpt to list five important inventions of the twentieth century
+ask_chatgpt_018.wav,ask chatgpt how can I start learning to play the guitar as a beginner
+ask_chatgpt_019.wav,ask chatgpt what are some ways to reduce stress during final exams
+ask_chatgpt_020.wav,ask chatgpt who painted the ceiling of the Sistine Chapel and in what year was it completed
+ask_chatgpt_021.wav,ask chatgpt to recommend a healthy recipe I can make in under thirty minutes with chicken and vegetables
+ask_chatgpt_022.wav,ask chatgpt to describe the plot of my favorite movie Inception in three sentences or less
+ask_chatgpt_023.wav,ask chatgpt how do I organize my schedule effectively if I have classes work and personal projects
+ask_chatgpt_024.wav,ask chatgpt what is the process to renew my passport if I live in California and it expires next month
+ask_chatgpt_025.wav,ask chatgpt what’s the best way to train for a half marathon if I only have ten weeks before the race
+ask_chatgpt_026.wav,ask chatgpt could you give me a list of ten must-see landmarks if I visit Paris for the first time
+ask_chatgpt_027.wav,ask chatgpt to explain the rules of chess to someone who has never played the game before
+ask_chatgpt_028.wav,ask chatgpt what are the main differences between classical and jazz music in terms of structure and improvisation
+ask_chatgpt_029.wav,ask chatgpt can you tell me about three famous women scientists and what they are known for
+ask_chatgpt_030.wav,ask chatgpt write a short email to my boss requesting time off next Friday for a family emergency
+ask_chatgpt_031.wav,ask chatgpt how do I set up a secure home Wi-Fi network with a strong password and guest access
+ask_chatgpt_032.wav,ask chatgpt what causes the seasons to change and why do we experience summer and winter at different times of the year
+ask_chatgpt_033.wav,ask chatgpt summarize the main arguments for and against using electric cars instead of gasoline-powered vehicles
+ask_chatgpt_034.wav,ask chatgpt give me a step-by-step guide for making homemade pizza dough without a standard mixer
+ask_chatgpt_035.wav,ask chatgpt what precautions should I take if I am traveling to a country where malaria is common
+ask_chatgpt_036.wav,ask chatgpt suggest some fun indoor activities for kids on a rainy day that do not require screens or technology
+ask_chatgpt_037.wav,ask chatgpt how does the process of applying to universities in the United States differ from that in Europe
+ask_chatgpt_038.wav,ask chatgpt tell me about the main characters in the novel Pride and Prejudice and their relationships
+ask_chatgpt_039.wav,ask chatgpt what are the potential impacts of climate change on agriculture in developing countries
+ask_chatgpt_040.wav,ask chatgpt create a shopping list for a week’s worth of healthy dinners for two people on a budget
+ask_chatgpt_041.wav,ask chatgpt can you explain how the internet works using an analogy that a ten-year-old would understand
+ask_chatgpt_042.wav,ask chatgpt what are the recommended daily exercises for someone who wants to improve flexibility and strength
+ask_chatgpt_043.wav,ask chatgpt find three quick breakfast ideas for busy mornings that are high in protein
+ask_chatgpt_044.wav,ask chatgpt outline the steps involved in writing a scientific research paper from start to finish
+ask_chatgpt_045.wav,ask chatgpt what should I consider when choosing a college major if I like both science and art
+ask_chatgpt_046.wav,ask chatgpt what is the best way to prepare for a job interview at a tech company as a software developer
+ask_chatgpt_047.wav,ask chatgpt to explain the process of photosynthesis in detail including the role of chlorophyll and sunlight
+ask_chatgpt_048.wav,ask gpt if I want to improve my public speaking skills what exercises should I practice regularly
+ask_chatgpt_049.wav,ask chatgpt can you list the pros and cons of remote work versus working in an office environment for productivity and work-life balance
+ask_chatgpt_050.wav,ask chatgpt give me some creative ways to recycle or reuse plastic containers at home
+
+ask_lock_001.wav,lock my computer
+ask_lock_002.wav,lock the computer
+ask_lock_003.wav,please lock my computer
+ask_lock_004.wav,can you lock my computer?
+ask_lock_005.wav,lock my mac
+ask_lock_006.wav,lock my laptop
+ask_lock_007.wav,please lock the screen
+ask_lock_008.wav,lock the screen
+ask_lock_009.wav,can you lock the screen
+ask_lock_010.wav,activate the lock screen
+ask_lock_011.wav,lock it
+ask_lock_012.wav,lock everything
+ask_lock_013.wav,lock
+ask_lock_014.wav,i want to lock my computer
+ask_lock_015.wav,turn on the lock screen
+ask_lock_016.wav,please activate the lock screen
+ask_lock_017.wav,lock this device now
+ask_lock_018.wav,secure my computer with the lock
+ask_lock_019.wav,lock the system immediately
+ask_lock_020.wav,please lock everything right now
+
+ask_spotify_001.wav,open spotify and play yesterday by the beatles
+ask_spotify_002.wav,open spotify and play shape of you by ed sheeran
+ask_spotify_003.wav,open spotify and play bad guy by billie eilish
+ask_spotify_004.wav,open spotify and play blinding lights by the weeknd
+ask_spotify_005.wav,open spotify and play perfect by ed sheeran
+ask_spotify_006.wav,open spotify and play uptown funk by bruno mars
+ask_spotify_007.wav,open spotify and play rolling in the deep by adele
+ask_spotify_008.wav,open spotify and play hotel california by the eagles
+ask_spotify_009.wav,open spotify and play hey jude by the beatles
+ask_spotify_010.wav,open spotify and play can’t stop the feeling by justin timberlake
+ask_spotify_011.wav,open spotify and play all of me by john legend
+ask_spotify_012.wav,open spotify and play shallow by lady gaga and bradley cooper
+ask_spotify_013.wav,open spotify and play someone like you by adele
+ask_spotify_014.wav,open spotify and play someone you loved by lewis capaldi
+ask_spotify_015.wav,open spotify and play watermelon sugar by harry styles
+ask_spotify_016.wav,open spotify and play despacito by luis fonsi
+ask_spotify_017.wav,open spotify and play see you again by wiz khalifa
+ask_spotify_018.wav,open spotify and play old town road by lil nas
+ask_spotify_019.wav,open spotify and play as it was by harry styles
+ask_spotify_020.wav,open spotify and play industry baby by lil nas x and jack harlow
+ask_spotify_021.wav,open spotify and play drivers license by olivia rodrigo
+ask_spotify_022.wav,open spotify and play dance monkey by tones and i
+ask_spotify_023.wav,open spotify and play bad habits by ed sheeran
+ask_spotify_024.wav,open spotify and play good 4 u by olivia rodrigo
+ask_spotify_025.wav,open spotify and play montero by lil nas x
+ask_spotify_026.wav,open spotify and play memories by maroon 5
+ask_spotify_027.wav,open spotify and play someone like you by adele
+ask_spotify_028.wav,open spotify and play stay by the kid laroi and justin bieber
+ask_spotify_029.wav,open spotify and play levitating by dua lipa
+ask_spotify_030.wav,open spotify and play anti hero by taylor swift
+
+ask_notes_001.wav,open notes and write down my grocery list
+ask_notes_002.wav,open notes and write down project ideas for tomorrow
+ask_notes_003.wav,open notes and write down meeting summary
+ask_notes_004.wav,open notes and write down call the dentist
+ask_notes_005.wav,open notes and write down remember to feed the cat in the morning and again before dinner and also check if we need more cat food this week
+ask_notes_006.wav,open notes and write down my to do list for tomorrow which is finish the budget report call Dr Patel to reschedule my appointment and pick up groceries on the way home
+ask_notes_007.wav,open notes and write down a list of my favorite recipes that I want to try making over the next month and also note where to find the ingredients for each one
+ask_notes_008.wav,open notes and write down quick reminders like call Mom after work water the plants before bed and bring in the mail from the mailbox
+ask_notes_009.wav,open notes and write down a shopping list for the week including eggs milk bread apples spinach and peanut butter
+ask_notes_010.wav,open notes and write down all the books I want to read this summer starting with The Great Gatsby followed by Sapiens and then maybe something new from the library
+ask_notes_011.wav,open notes and write down things to pack for the trip like my passport toothbrush phone charger headphones and a pair of comfortable shoes
+ask_notes_012.wav,open notes and write down my workout schedule for the next seven days with planned running sessions on Monday Wednesday and Friday and yoga on the weekend
+ask_notes_013.wav,open notes and write down my daily goals which are to drink eight glasses of water complete at least one chapter of my course and go for a walk in the evening
+ask_notes_014.wav,open notes and write down ideas for birthday gifts for Sarah such as a new cookbook a cozy blanket or tickets to a concert she wants to see
+ask_notes_015.wav,open notes and write down my favorite inspirational quote for the week which is You are braver than you believe stronger than you seem and smarter than you think
+ask_notes_016.wav,open notes and write down things to fix at home like the leaky faucet in the kitchen the squeaky door in my bedroom and the loose shelf in the closet
+ask_notes_017.wav,open notes and write down all the tasks I need to finish before Friday including submitting my assignment cleaning the house and sending an email to my professor
+ask_notes_018.wav,open notes and write down a list of movies I want to watch this month starting with Inception and adding any recommendations from friends
+ask_notes_019.wav,open notes and write down recipes to try this weekend like homemade pizza banana bread and a new salad with quinoa and chickpeas
+ask_notes_020.wav,open notes and write down my book club notes including questions about the plot character motivations and favorite moments from the story
+ask_notes_021.wav,open notes and write down things to research for my project like renewable energy sources the history of wind power and recent innovations in solar panels
+ask_notes_022.wav,open notes and write down vacation ideas for next year such as visiting Greece taking a road trip through Italy or exploring local hiking trails
+ask_notes_023.wav,open notes and write down a grocery budget list for this month making sure to include extra snacks and any special ingredients I need for new recipes
+ask_notes_024.wav,open notes and write down reminders for Friday which include taking out the trash setting up the meeting agenda and printing the presentation slides
+ask_notes_025.wav,open notes and write down project deadlines for each class this semester and note which ones require group work and which onea are individual assignments
+ask_notes_026.wav,open notes and write down the times for my conference calls this week and include the Zoom links and topics for each meeting
+ask_notes_027.wav,open notes and write down a motivational quote for today which is Every day may not be good but there is something good in every day
+ask_notes_028.wav,open notes and write down funny things that happened this week like the time the cat chased the vacuum and when my friend spilled coffee on her notes
+ask_notes_029.wav,open notes and write down important contact information for my doctor dentist and my supervisor at work so I have it all in one place
+ask_notes_030.wav,open notes and write down urgent tasks to finish before the weekend like paying my phone bill finishing the laundry and calling my landlord about the repairs
+
+ask_calendar_001.wav,open my calendar
+ask_calendar_002.wav,open my calendar for today
+ask_calendar_003.wav,open my calendar and show the week
+ask_calendar_004.wav,open my calendar for tomorrow
+ask_calendar_005.wav,open my calendar to next month
+ask_calendar_006.wav,open my calendar for appointments
+ask_calendar_007.wav,open my calendar for friday
+ask_calendar_008.wav,open my calendar to see the meetings
+ask_calendar_009.wav,open my calendar and display my events
+ask_calendar_010.wav,open my calendar and show all events
+ask_calendar_011.wav,open my calendar for monday's schedule
+ask_calendar_012.wav,open my calendar for august
+ask_calendar_013.wav,open my calendar and display reminders
+ask_calendar_014.wav,open my calendar and check availability
+ask_calendar_015.wav,open my calendar for this week
+ask_calendar_016.wav,open my calendar for next week
+ask_calendar_017.wav,open my calendar and show deadlines
+ask_calendar_018.wav,open my calendar to see birthdays
+ask_calendar_019.wav,open my calendar for all-day events
+ask_calendar_020.wav,open my calendar to review
+
+ask_google_001.wav,open google and search best vegan recipes
+ask_google_002.wav,open google and search weather in london
+ask_google_003.wav,open google and search how to learn python
+ask_google_004.wav,open google and search productivity hacks
+ask_google_005.wav,open google and search top restaurants near me
+ask_google_006.wav,open google and search flight status to new york
+ask_google_007.wav,open google and search news about technology
+ask_google_008.wav,open google and search my favorite movie cast
+ask_google_009.wav,open google and search directions to central park
+ask_google_010.wav,open google and search time in tokyo
+ask_google_011.wav,open google and search how to bake bread
+ask_google_012.wav,open google and search best books to read
+ask_google_013.wav,open google and search fun things to do in paris
+ask_google_014.wav,open google and search latest football scores
+ask_google_015.wav,open google and search live weather updates
+ask_google_016.wav,open google and search stock price for apple
+ask_google_017.wav,open google and search top tourist attractions in italy
+ask_google_018.wav,open google and search easy chicken recipes
+ask_google_019.wav,open google and search motivational quotes
+ask_google_020.wav,open google and search news headlines
+ask_google_021.wav,open google and search travel tips for japan
+ask_google_022.wav,open google and search good workout routines
+ask_google_023.wav,open google and search what is quantum computing
+ask_google_024.wav,open google and search best holiday destinations
+ask_google_025.wav,open google and search recipes with mushrooms
+ask_google_026.wav,open google and search symptoms of cold
+ask_google_027.wav,open google and search best horror movies
+ask_google_028.wav,open google and search easy pasta dishes
+ask_google_029.wav,open google and search meditation techniques
+ask_google_030.wav,open google and search history of the internet
+ask_google_031.wav,open google and search top rated laptops
+ask_google_032.wav,open google and search quick lunch ideas
+ask_google_033.wav,open google and search popular podcasts
+ask_google_034.wav,open google and search tourist spots in london
+ask_google_035.wav,open google and search cycling trails nearby
+ask_google_036.wav,open google and search best hiking shoes
+ask_google_037.wav,open google and search sunset times
+ask_google_038.wav,open google and search art galleries in paris
+ask_google_039.wav,open google and search running tips
+ask_google_040.wav,open google and search easy guitar chords
+ask_google_041.wav,open google and search public transport in rome
+ask_google_042.wav,open google and search cheap flight tickets
+ask_google_043.wav,open google and search vegan dessert recipes
+ask_google_044.wav,open google and search famous authors
+ask_google_045.wav,open google and search top selling games
+ask_google_046.wav,open google and search birthday party ideas
+ask_google_047.wav,open google and search latest mobile phones
+ask_google_048.wav,open google and search free online courses
+ask_google_049.wav,open google and search things to do at home
+ask_google_050.wav,open google and search quick dessert ideas
+
+ask_maps_001.wav,open maps and search central park
+ask_maps_002.wav,open maps and search times square
+ask_maps_003.wav,open maps and search coffee shops nearby
+ask_maps_004.wav,open maps and search nearest gas station
+ask_maps_005.wav,open maps and search heathrow airport
+ask_maps_006.wav,open maps and search domino's pizza
+ask_maps_007.wav,open maps and search charing cross hospital
+ask_maps_008.wav,open maps and search my home address
+ask_maps_009.wav,open maps and search westfield shopping centre
+ask_maps_010.wav,open maps and search V&A
+ask_maps_011.wav,open maps and search bethnal green station
+ask_maps_012.wav,open maps and search city hall
+ask_maps_013.wav,open maps and search puregym
+ask_maps_014.wav,open maps and search cinema
+ask_maps_015.wav,open maps and search Fulham stadium
+ask_maps_016.wav,open maps and search Bancone
+ask_maps_017.wav,open maps and search Imperial College London
+ask_maps_018.wav,open maps and search Victoria park
+ask_maps_019.wav,open maps and search Gail's bakery
+ask_maps_020.wav,open maps and search Daunt bookstore
+ask_maps_021.wav,open maps and search HSBC bank
+ask_maps_022.wav,open maps and search Boots pharmacy
+ask_maps_023.wav,open maps and search the post office
+ask_maps_024.wav,open maps and search animal shelter
+ask_maps_025.wav,open maps and search library
+ask_maps_026.wav,open maps and search pet store
+ask_maps_027.wav,open maps and search barber shop
+ask_maps_028.wav,open maps and search flower shop
+ask_maps_029.wav,open maps and search Hammersmith
+ask_maps_030.wav,open maps and search music store
+ask_maps_031.wav,open maps and search Fulham
+ask_maps_032.wav,open maps and search town square
+ask_maps_033.wav,open maps and search food market
+ask_maps_034.wav,open maps and search wine bar
+ask_maps_035.wav,open maps and search italian restaurant
+ask_maps_036.wav,open maps and search zoo
+ask_maps_037.wav,open maps and search sports bar
+ask_maps_038.wav,open maps and search water park
+ask_maps_039.wav,open maps and search bike rental
+ask_maps_040.wav,open maps and search sushi place
+ask_maps_041.wav,open maps and search swimming pool
+ask_maps_042.wav,open maps and search kids park
+ask_maps_043.wav,open maps and search community centre
+ask_maps_044.wav,open maps and search Lloyds bank
+ask_maps_045.wav,open maps and search post office near me
+ask_maps_046.wav,open maps and search soho
+ask_maps_047.wav,open maps and search top secret comedy club
+ask_maps_048.wav,open maps and search hardware store
+ask_maps_049.wav,open maps and search hospital emergency
+ask_maps_050.wav,open maps and search conference center
+
+ask_screenshot_001.wav,take a screenshot
+ask_screenshot_002.wav,take a screenshot of my screen
+ask_screenshot_003.wav,take a screenshot and save to desktop
+ask_screenshot_004.wav,take a screenshot now
+ask_screenshot_005.wav,take a screenshot quickly
+ask_screenshot_006.wav,take a screenshot for me
+ask_screenshot_007.wav,take a screenshot and save it
+ask_screenshot_008.wav,take a screenshot of this window
+ask_screenshot_009.wav,take a screenshot of the current page
+ask_screenshot_010.wav,take a screenshot and store on desktop
+ask_screenshot_011.wav,take a screenshot and save
+ask_screenshot_012.wav,take a screenshot to desktop
+ask_screenshot_013.wav,take a screenshot and send to desktop
+ask_screenshot_014.wav,take a screenshot right now
+ask_screenshot_015.wav,take a screenshot and save the file
+ask_screenshot_016.wav,take a screenshot of what I see
+ask_screenshot_017.wav,take a screenshot please
+ask_screenshot_018.wav,take a screenshot and capture everything
+ask_screenshot_019.wav,take a screenshot and save as image
+ask_screenshot_020.wav,take a screenshot for this computer
+
+ask_gmail_001.wav,open gmail and write an email saying I wanted to check in about the project deadline and see if there are any updates I should be aware of this week
+ask_gmail_002.wav,open gmail and write an email saying thank you so much for your help with the event everything went really smoothly and I appreciate your support
+ask_gmail_003.wav,open gmail and write an email saying I would like to reschedule our meeting to next Tuesday afternoon if that works for you please let me know
+ask_gmail_004.wav,open gmail and write an email saying I am reaching out to confirm our appointment for Friday morning at ten and please let me know if anything has changed
+ask_gmail_005.wav,open gmail and write an email saying congratulations on your recent promotion I am so happy for you and hope we can celebrate soon
+ask_gmail_006.wav,open gmail and write an email saying I have attached the revised document with all the changes you requested let me know if there is anything else to fix
+ask_gmail_007.wav,open gmail and write an email saying I wanted to ask if you could send me the details for the upcoming conference including the schedule and venue address
+ask_gmail_008.wav,open gmail and write an email saying just a quick reminder to submit your timesheets by the end of the day so payroll can process them on time
+ask_gmail_009.wav,open gmail and write an email saying please find below the minutes from our last meeting and let me know if you have any questions or corrections
+ask_gmail_010.wav,open gmail and write an email saying I would appreciate your feedback on the attached proposal and any suggestions you might have before I finalize it
+ask_gmail_011.wav,open gmail and write an email saying hope you are doing well and I wanted to share the link to the article we talked about yesterday
+ask_gmail_012.wav,open gmail and write an email saying the order has been shipped and you should receive a tracking number soon thank you for your patience
+ask_gmail_013.wav,open gmail and write an email saying I wanted to let you know that I will be working remotely tomorrow and will be available on email and phone
+ask_gmail_014.wav,open gmail and write an email saying I have some ideas for the marketing campaign and would love to discuss them with you at your convenience
+ask_gmail_015.wav,open gmail and write an email saying happy birthday and I hope you have a wonderful day filled with joy and celebration
+ask_gmail_016.wav,open gmail and write an email saying the attached file contains the notes from our call this morning and please let me know if I missed anything important
+ask_gmail_017.wav,open gmail and write an email saying thank you for your prompt response and I will get back to you with the requested information soon
+ask_gmail_018.wav,open gmail and write an email saying please confirm that you have received this message and let me know if you have any further questions
+ask_gmail_019.wav,open gmail and write an email saying it was great meeting you at the conference last week and I look forward to staying in touch
+ask_gmail_020.wav,open gmail and write an email saying I hope you had a safe trip back home and thanks again for all your help during your visit
+
+ask_mute_001.wav,mute my computer
+ask_mute_002.wav,mute the sound
+ask_mute_003.wav,mute the audio
+ask_mute_004.wav,mute the speakers
+ask_mute_005.wav,mute now
+ask_mute_006.wav,mute everything
+ask_mute_007.wav,mute system volume
+ask_mute_008.wav,mute all sounds
+ask_mute_009.wav,mute please
+ask_mute_010.wav,please mute
+ask_mute_011.wav,mute output
+ask_mute_012.wav,mute my laptop
+ask_mute_013.wav,can you mute my computer
+ask_mute_014.wav,mute all audio
+ask_mute_015.wav,mute immediately
+
+ask_unmute_001.wav,unmute my computer
+ask_unmute_002.wav,unmute the sound
+ask_unmute_003.wav,unmute the audio
+ask_unmute_004.wav,unmute the speakers
+ask_unmute_005.wav,unmute now
+ask_unmute_006.wav,unmute everything
+ask_unmute_007.wav,unmute system volume
+ask_unmute_008.wav,unmute all sounds
+ask_unmute_009.wav,unmute please
+ask_unmute_010.wav,please unmute
+ask_unmute_011.wav,unmute output
+ask_unmute_012.wav,unmute my laptop
+ask_unmute_013.wav,can you unmute my computer
+ask_unmute_014.wav,unmute all audio
+ask_unmute_015.wav,unmute immediately
