@@ -12,10 +12,8 @@ import pandas as pd
 import argparse
 import torch
 from torch import nn
-from torch.utils.data import Dataset, DataLoader
-from transformers import WhisperProcessor, WhisperModel
-import torchaudio
-import csv
+from torch.utils.data import DataLoader, WeightedRandomSampler
+from transformers import WhisperProcessor
 from sklearn.metrics import f1_score
 import numpy as np
 from tqdm import tqdm
@@ -61,6 +59,23 @@ try:
 except FileNotFoundError:
     print(f"Data directory not found: {DATA_DIR}, proceeding anyway.")
 
+def create_weighted_sampler(dataset, recording_weight=4.0, generated_weight=1.0):
+    """Create weighted sampler for upsampling recording samples."""
+    weights = []
+    for i in range(len(dataset)):
+        sample = dataset[i]
+        sample_type = sample.get('sample_type', 'unknown')
+        if sample_type == 'recording':
+            weights.append(recording_weight)
+        else:
+            weights.append(generated_weight)
+    
+    return WeightedRandomSampler(
+        weights=weights,
+        num_samples=len(dataset),
+        replacement=True
+    )
+
 def train(data_dir: str, model_dir: str, use_dummy: bool = False, from_hf: bool = False, epochs: int = EPOCHS):
   # Initialize wandb
   wandb.init(
@@ -98,11 +113,11 @@ def train(data_dir: str, model_dir: str, use_dummy: bool = False, from_hf: bool 
     classes = sorted(train_ds.unique("class_label"))
     label_to_idx = {cls: i for i, cls in enumerate(classes)}
     
-    # Create the training dataset
-    dataset = AudioHFDataset(processor, label_to_idx, ds=train_ds)
+    # Create the training dataset with augmentations enabled
+    dataset = AudioHFDataset(processor, label_to_idx, ds=train_ds, apply_augmentations=True)
     
-    # Create the validation dataset
-    val_dataset = AudioHFDataset(processor, label_to_idx, ds=val_ds)
+    # Create the validation dataset (no augmentations for validation)
+    val_dataset = AudioHFDataset(processor, label_to_idx, ds=val_ds, apply_augmentations=False)
 
   else: # Local CSV dataset
     data_file = data_dir.parent.parent / "audio_dataset.csv"
@@ -130,10 +145,17 @@ def train(data_dir: str, model_dir: str, use_dummy: bool = False, from_hf: bool 
   wandb.config.update({"num_classes": len(classes), "classes": classes})
   
   print(f"Using dataset: {type(dataset)}")
+
+  if from_hf:
+    sampler = create_weighted_sampler(dataset)
+  else:
+    sampler = None
+
   loader = DataLoader(
       dataset, 
       batch_size=BATCH_SIZE, 
-      shuffle=True, 
+      shuffle=True if not from_hf else False, 
+      sampler=sampler,
       num_workers=4, 
       pin_memory=True  # Speeds up CPU-to-GPU data transfer
   )
