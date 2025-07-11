@@ -330,10 +330,11 @@ def main():
   parser = argparse.ArgumentParser()
   parser.add_argument("--dummy", action="store_true", help="Use dummy dataset")
   parser.add_argument("--hf", action="store_true", help="Use HF dataset")
+  parser.add_argument("--epochs", type=int, default=EPOCHS, help=f"Number of training epochs (default: {EPOCHS})")
   args = parser.parse_args()
   use_dummy = args.dummy
   from_hf = args.hf
-  train(DATA_DIR, MODEL_DIR, use_dummy, from_hf)
+  train(DATA_DIR, MODEL_DIR, use_dummy, from_hf, epochs=args.epochs)
 
 if __name__ == "__main__":
   main()

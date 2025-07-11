@@ -25,28 +25,76 @@ def upload_from_csv(repo_name, csv_path):
     if csv_path is None:
         raise ValueError("--add_from_csv requires a CSV path")
 
-    # 1. Load new rows
-    print(f"Loading new rows from '{csv_path}'...")
-    new_rows = load_dataset("csv", data_files=csv_path, split="train")
-    new_rows = new_rows.cast_column("audio", Audio(sampling_rate=16_000))
-    print(f"Loaded {len(new_rows)} new rows.")
-
-    # 2. Load existing remote dataset. If the repo is empty or doesn't exist yet,
-    #    fallback to just the new rows.
+    # 1. Load existing remote dataset first to get the target schema
     try:
-        print(f"Loading existing dataset from '{repo_name}'...")
-        existing = load_dataset(repo_name, split="train")
-        print("Concatenating datasets...")
-        combined = concatenate_datasets([existing, new_rows])
-        commit_msg = f"Append {len(new_rows)} new rows from {csv_path}"
+        print(f"Loading existing dataset from '{repo_name}' to get schema...")
+        existing_ds_dict = load_dataset(repo_name)
+        existing_train = existing_ds_dict['train']
+        target_features = existing_train.features
+        print(f"Target schema has {len(target_features)} features.")
     except FileNotFoundError:
-        print(f"Repository '{repo_name}' not found. Creating it from scratch.")
-        combined = new_rows
-        commit_msg = f"Initial upload from {csv_path}"
+        print(f"Repository '{repo_name}' not found. Will create from scratch without schema alignment.")
+        target_features = None
+        existing_train = None
 
-    # 3. Push combined dataset
-    print(f"Uploading {len(combined)} total rows to '{repo_name}'...")
-    combined.push_to_hub(repo_name, commit_message=commit_msg)
+    # 2. Load new rows from CSV
+    print(f"Loading new rows from '{csv_path}'...")
+    df = pd.read_csv(csv_path)
+    print(f"Loaded {len(df)} new rows.")
+
+    # 3. Transform the DataFrame to match the target schema if one exists
+    if target_features is not None:
+        print("Transforming new data to match target schema...")
+        new_rows = []
+        for _, row in df.iterrows():
+            new_rows.append({
+                'audio': row.get('filename', row.get('audio_path')),  # Handle both possible column names
+                'class_label': row.get('command_token', row.get('class_label')),
+                # Add other columns from the target schema with defaults
+                'type': 'recording',
+                'original_filename': row.get('filename', row.get('original_filename')),
+                'timestamp': row.get('timestamp'),
+                'duration_seconds': row.get('duration_seconds'),
+                'original_sentence': row.get('original_sentence'),
+                'clean_sentence': row.get('clean_sentence'),
+                'info': row.get('info'),
+            })
+        
+        # Create Dataset and cast to target schema
+        new_rows_ds = Dataset.from_list(new_rows)
+        print("Casting new data to the exact target features...")
+        new_rows_ds = new_rows_ds.cast(target_features)
+    else:
+        # No existing schema, load directly from CSV
+        new_rows_ds = load_dataset("csv", data_files=csv_path, split="train")
+        new_rows_ds = new_rows_ds.cast_column("audio", Audio(sampling_rate=16_000))
+
+    # 4. Concatenate with existing data or use as-is
+    if existing_train is not None:
+        print("Concatenating datasets...")
+        combined = concatenate_datasets([existing_train, new_rows_ds])
+        commit_msg = f"Append {len(new_rows_ds)} new rows from {csv_path}"
+        
+        # Preserve other splits (like validation) if they exist
+        if len(existing_ds_dict) > 1:
+            print(f"Preserving {len(existing_ds_dict) - 1} other splits...")
+            combined_dict = DatasetDict(existing_ds_dict)
+            combined_dict['train'] = combined
+            
+            # Push the full DatasetDict
+            print(f"Uploading {len(combined)} total train rows to '{repo_name}'...")
+            combined_dict.push_to_hub(repo_name, commit_message=commit_msg)
+        else:
+            # Only train split exists
+            print(f"Uploading {len(combined)} total rows to '{repo_name}'...")
+            combined.push_to_hub(repo_name, commit_message=commit_msg)
+    else:
+        # Creating new repo
+        combined = new_rows_ds
+        commit_msg = f"Initial upload from {csv_path}"
+        print(f"Uploading {len(combined)} total rows to '{repo_name}'...")
+        combined.push_to_hub(repo_name, commit_message=commit_msg)
+
     print("✅ Upload complete!")
 
 def upload_validation_split(repo_name, csv_path):
