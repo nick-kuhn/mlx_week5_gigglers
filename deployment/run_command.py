@@ -127,7 +127,7 @@ if AUDIO_BACKEND == "portaudio":
         recording = True
         stream = sd.InputStream(samplerate=fs, channels=channels, callback=audio_callback)
         stream.start()
-        print("Recording... (hold SPACE)")
+        print("Recording... (hold CTRL)")
 
     def stop_recording():
         global recording, stream, audio
@@ -165,7 +165,7 @@ else:
                 stderr=subprocess.DEVNULL,
                 stdin=subprocess.DEVNULL
             )
-        print("Recording... (hold SPACE)")
+        print("Recording... (hold CTRL)")
 
     def stop_recording():
         global recording, recording_process, temp_audio_file
@@ -256,11 +256,46 @@ def open_spotify(song=None):
         print(f"Searched for song: {song}")
 
 def open_notes(note=None):
+    """Open notes with pre-written text"""
+    # Default text to pre-populate
+    draft_text = """(Draft)
+To Nick, Api, Yali,
+
+How boring was this weeks project right? Wish it was over already!
+
+Ben"""
+    
     if note:
         add_quick_note_mac(note)
     else:
-        print("Opening Notes...")
-        os.system("open -a Notes")
+        print("Opening Notes with draft text...")
+        
+        # Try different approaches based on platform
+        if os.system("which open > /dev/null 2>&1") == 0:  # macOS
+            add_quick_note_mac(draft_text)
+        else:  # Linux/Windows - create temp file and open with text editor
+            try:
+                import tempfile
+                with tempfile.NamedTemporaryFile(mode='w', suffix='.txt', delete=False) as temp_file:
+                    temp_file.write(draft_text)
+                    temp_file_path = temp_file.name
+                
+                # Linux
+                if os.system("which gedit > /dev/null 2>&1") == 0:
+                    subprocess.Popen(['gedit', temp_file_path])
+                elif os.system("which kate > /dev/null 2>&1") == 0:
+                    subprocess.Popen(['kate', temp_file_path])
+                elif os.system("which nano > /dev/null 2>&1") == 0:
+                    subprocess.Popen(['gnome-terminal', '--', 'nano', temp_file_path])
+                # Windows
+                elif os.name == 'nt':
+                    os.system(f"notepad '{temp_file_path}'")
+                else:
+                    print("No text editor found")
+                    os.unlink(temp_file_path)
+                    
+            except Exception as e:
+                print(f"Error opening notes: {e}")
 
 def add_quick_note_mac(note):
     import subprocess
@@ -321,11 +356,61 @@ def open_gmail_email(prompt=None):
 
 def mute_audio():
     print("Muting audio...")
-    os.system("""osascript -e 'set volume output muted true'""")
+    try:
+        # Linux with ALSA
+        if os.system("which amixer > /dev/null 2>&1") == 0:
+            os.system("amixer -D pulse sset Master toggle 2>/dev/null || amixer sset Master toggle")
+        # macOS
+        elif os.system("which osascript > /dev/null 2>&1") == 0:
+            os.system("""osascript -e 'set volume output muted true'""")
+        else:
+            print("Mute not implemented for this system")
+    except Exception as e:
+        print(f"Error muting audio: {e}")
 
 def unmute_audio():
     print("Unmuting audio...")
-    os.system("""osascript -e 'set volume output muted false'""")
+    try:
+        # Linux with ALSA
+        if os.system("which amixer > /dev/null 2>&1") == 0:
+            os.system("amixer -D pulse sset Master on 2>/dev/null || amixer sset Master on")
+        # macOS
+        elif os.system("which osascript > /dev/null 2>&1") == 0:
+            os.system("""osascript -e 'set volume output muted false'""")
+        else:
+            print("Unmute not implemented for this system")
+    except Exception as e:
+        print(f"Error unmuting audio: {e}")
+
+def volume_up():
+    """Increase system volume"""
+    print("Volume up...")
+    try:
+        # Linux with ALSA
+        if os.system("which amixer > /dev/null 2>&1") == 0:
+            os.system("amixer -D pulse sset Master 5%+ 2>/dev/null || amixer sset Master 5%+")
+        # macOS
+        elif os.system("which osascript > /dev/null 2>&1") == 0:
+            os.system("""osascript -e 'set volume output volume (output volume of (get volume settings) + 10)'""")
+        else:
+            print("Volume control not implemented for this system")
+    except Exception as e:
+        print(f"Error increasing volume: {e}")
+
+def volume_down():
+    """Decrease system volume"""
+    print("Volume down...")
+    try:
+        # Linux with ALSA
+        if os.system("which amixer > /dev/null 2>&1") == 0:
+            os.system("amixer -D pulse sset Master 5%- 2>/dev/null || amixer sset Master 5%-")
+        # macOS
+        elif os.system("which osascript > /dev/null 2>&1") == 0:
+            os.system("""osascript -e 'set volume output volume (output volume of (get volume settings) - 10)'""")
+        else:
+            print("Volume control not implemented for this system")
+    except Exception as e:
+        print(f"Error decreasing volume: {e}")
 
 def lock_computer():
     """Lock the computer (works on Linux and macOS)"""
@@ -398,12 +483,10 @@ def handle_command(command):
                 print("Could not switch window")
             return
         elif command in ["volume_down", "volume down"]:
-            print("Volume down...")
-            # Add volume down logic here
+            volume_down()
             return
         elif command in ["volume_up", "volume up"]:
-            print("Volume up...")
-            # Add volume up logic here
+            volume_up()
             return
 
     # Handle natural language commands (base Whisper)
@@ -454,12 +537,12 @@ def handle_command(command):
 
 # ----- Keyboard Listener -----
 def on_press(key):
-    if key == keyboard.Key.space and not getattr(on_press, "is_recording", False):
+    if key == keyboard.Key.ctrl_l and not getattr(on_press, "is_recording", False):
         on_press.is_recording = True
         start_recording()
 
 def on_release(key):
-    if key == keyboard.Key.space and getattr(on_press, "is_recording", False):
+    if key == keyboard.Key.ctrl_l and getattr(on_press, "is_recording", False):
         on_press.is_recording = False
         audio_np = stop_recording()
         if audio_np is not None:
@@ -470,7 +553,7 @@ def on_release(key):
         return False
 
 if __name__ == "__main__":
-    print("Hold SPACE to record. Release to stop and transcribe. Press ESC to quit.")
+    print("Hold CTRL to record. Release to stop and transcribe. Press ESC to quit.")
     print(f"Audio backend: {AUDIO_BACKEND}")
     
     if AUDIO_BACKEND == "ffmpeg":

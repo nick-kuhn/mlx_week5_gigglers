@@ -144,6 +144,69 @@ python model/train_whspr_classifier.py
 ```
 This will run inference every epoch on 50% of the real world human data. For simplicity, at the moment it takes every other entry in metadata as validation, so the inverse entries can be sued for testing.
 
+### Deploy 
+
+There are two deployment options for the voice command system:
+
+#### 1. Keyword-Based Deployment (`deployment/run_command.py`)
+A traditional keyword-matching system that responds to specific spoken phrases:
+
+**Available Commands:**
+- "open browser" - Opens default browser
+- "close browser" - Closes current browser window  
+- "google" - Opens Google search
+- "play music" - Starts music playback
+- "stop music" - Stops music playback
+- "volume up" - Increases system volume
+- "volume down" - Decreases system volume
+- "mute" - Toggles audio mute
+- "maximize window" - Maximizes current window
+- "switch window" - Alt+Tab to next window
+- "open notepad" - Opens text editor
+
+**Usage:**
+```bash
+python deployment/run_command.py
+```
+Hold CTRL to record, release to process. Uses exact keyword matching with speech-to-text.
+
+#### 2. AI Classifier Deployment (`deployment/deploy_classifier.py`)
+Uses the trained WhisperEncoderClassifier model for intelligent command classification:
+
+**Available Command Tokens:**
+- `<close_browser>` - Opens rickroll video (easter egg!)
+- `<google>` - Opens Google search
+- `<maximize_window>` - Maximizes current window
+- `<mute>` - Toggles system audio mute
+- `<no_action>` - Does nothing, pretty cool.
+- `<open_browser>` - Opens web browser (auto locating to our fave person)
+- `<open_notepad>` - Opens text editor
+- `<play_music>` - Intelligently starts music playback
+- `<stop_music>` - Stops music playback
+- `<switch_window>` - Switches to next window
+- `<volume_down>` - Decreases system volume
+- `<volume_up>` - Increases system volume
+
+**Features:**
+- Uses custom trained classifier for robust command recognition
+- Confidence threshold filtering (default: 0.4)
+- Automatic audio backend detection (PortAudio/ffmpeg)
+- Enhanced music playback with multiple player support
+- Cross-platform compatibility (Linux/macOS/Windows)
+
+**Usage:**
+```bash
+python deployment/deploy_classifier.py
+```
+Hold CTRL to record, release to classify and execute. Requires `best_model.pt` in deployment folder.
+
+**Audio Backend Support:**
+- **PortAudio** (preferred): Uses `sounddevice` for real-time audio capture
+- **ffmpeg** (fallback): Uses ALSA on Linux for audio recording
+
+Both systems provide real-time voice command execution with visual feedback and error handling. 
+
+
 ### TODO:
 - fix audio gen
 - fix class names! currently its making 12 classes and giving only 'volume' rather than 'volume_up' etc

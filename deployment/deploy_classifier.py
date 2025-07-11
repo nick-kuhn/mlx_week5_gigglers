@@ -37,7 +37,7 @@ except ImportError as e:
 
 # Original command tokens from training
 COMMAND_TOKENS = [
-    '<close_browser>', '<google>', '<maximize_window>', '<mute>', '<no_action>',
+    '<close_browser>', '<google>', '<maximize_window>', '<minimize_window>', '<mute>', '<no_action>',
     '<open_browser>', '<open_notepad>', '<play_music>', '<stop_music>',
     '<switch_window>', '<volume_down>', '<volume_up>'
 ]
@@ -135,7 +135,7 @@ if AUDIO_BACKEND == "portaudio":
         recording = True
         stream = sd.InputStream(samplerate=fs, channels=channels, callback=audio_callback)
         stream.start()
-        print("🎤 Recording... (hold SPACE)")
+        print("🎤 Recording... (hold CTRL)")
 
     def stop_recording():
         global recording, stream, audio
@@ -173,7 +173,7 @@ else:
                 stderr=subprocess.DEVNULL,
                 stdin=subprocess.DEVNULL
             )
-        print("🎤 Recording... (hold SPACE)")
+        print("🎤 Recording... (hold CTRL)")
 
     def stop_recording():
         global recording, recording_process, temp_audio_file
@@ -276,12 +276,28 @@ def maximize_window():
     except Exception as e:
         print(f"Error maximizing window: {e}")
 
+def minimize_window():
+    """Minimize the current window"""
+    print("🔽 Minimizing window...")
+    try:
+        # Windows/Linux: Windows+Down or Alt+F9
+        if os.name in ['posix', 'nt']:
+            pyautogui.hotkey('win', 'down')
+        # macOS: Cmd+M
+        else:
+            pyautogui.hotkey('cmd', 'm')
+    except Exception as e:
+        print(f"Error minimizing window: {e}")
+
 def mute_audio():
     """Mute system audio"""
     print("🔇 Muting audio...")
     try:
-        # Linux
-        if os.system("which pactl > /dev/null 2>&1") == 0:
+        # Linux with ALSA
+        if os.system("which amixer > /dev/null 2>&1") == 0:
+            os.system("amixer -D pulse sset Master toggle 2>/dev/null || amixer sset Master toggle")
+        # Linux with PulseAudio
+        elif os.system("which pactl > /dev/null 2>&1") == 0:
             os.system("pactl set-sink-mute @DEFAULT_SINK@ toggle")
         # macOS
         elif os.system("which osascript > /dev/null 2>&1") == 0:
@@ -302,24 +318,44 @@ def open_browser():
     webbrowser.open("https://www.linkedin.com/in/besart-shyti-20616956/overlay/photo/")
 
 def open_notepad():
-    """Open notepad/text editor"""
+    """Open notepad/text editor with pre-written text"""
     print("📝 Opening notepad...")
+    
+    # Text to pre-populate
+    draft_text = """
+Hey Api and Yali,
+
+Is it me or is Nik always pushing these vibe coded changes that mess up the whole repo?!
+
+So done with him 
+
+Ben"""
+    
     try:
+        # Create a temporary file with the text
+        import tempfile
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.txt', delete=False) as temp_file:
+            temp_file.write(draft_text)
+            temp_file_path = temp_file.name
+        
         # Linux
         if os.system("which gedit > /dev/null 2>&1") == 0:
-            subprocess.Popen(['gedit'])
+            subprocess.Popen(['gedit', temp_file_path])
         elif os.system("which kate > /dev/null 2>&1") == 0:
-            subprocess.Popen(['kate'])
+            subprocess.Popen(['kate', temp_file_path])
         elif os.system("which nano > /dev/null 2>&1") == 0:
-            subprocess.Popen(['gnome-terminal', '--', 'nano'])
+            subprocess.Popen(['gnome-terminal', '--', 'nano', temp_file_path])
         # macOS
         elif os.system("which open > /dev/null 2>&1") == 0:
-            os.system("open -a TextEdit")
+            os.system(f"open -a TextEdit '{temp_file_path}'")
         # Windows
         elif os.name == 'nt':
-            os.system("notepad")
+            os.system(f"notepad '{temp_file_path}'")
         else:
             print("No text editor found")
+            # Clean up temp file if no editor found
+            os.unlink(temp_file_path)
+            
     except Exception as e:
         print(f"Error opening notepad: {e}")
 
@@ -519,8 +555,11 @@ def volume_down():
     """Decrease system volume"""
     print("🔉 Volume down...")
     try:
-        # Linux
-        if os.system("which pactl > /dev/null 2>&1") == 0:
+        # Linux with ALSA
+        if os.system("which amixer > /dev/null 2>&1") == 0:
+            os.system("amixer -D pulse sset Master 5%- 2>/dev/null || amixer sset Master 5%-")
+        # Linux with PulseAudio
+        elif os.system("which pactl > /dev/null 2>&1") == 0:
             os.system("pactl set-sink-volume @DEFAULT_SINK@ -10%")
         # macOS
         elif os.system("which osascript > /dev/null 2>&1") == 0:
@@ -534,8 +573,11 @@ def volume_up():
     """Increase system volume"""
     print("🔊 Volume up...")
     try:
-        # Linux
-        if os.system("which pactl > /dev/null 2>&1") == 0:
+        # Linux with ALSA
+        if os.system("which amixer > /dev/null 2>&1") == 0:
+            os.system("amixer -D pulse sset Master 5%+ 2>/dev/null || amixer sset Master 5%+")
+        # Linux with PulseAudio
+        elif os.system("which pactl > /dev/null 2>&1") == 0:
             os.system("pactl set-sink-volume @DEFAULT_SINK@ +10%")
         # macOS
         elif os.system("which osascript > /dev/null 2>&1") == 0:
@@ -550,6 +592,7 @@ COMMAND_FUNCTIONS = {
     '<close_browser>': close_browser,
     '<google>': open_google,
     '<maximize_window>': maximize_window,
+    '<minimize_window>': minimize_window,
     '<mute>': mute_audio,
     '<no_action>': no_action,
     '<open_browser>': open_browser,
@@ -579,12 +622,12 @@ def execute_command(predicted_class, confidence):
 
 # ----- Keyboard Listener -----
 def on_press(key):
-    if key == keyboard.Key.space and not getattr(on_press, "is_recording", False):
+    if key == keyboard.Key.ctrl_l and not getattr(on_press, "is_recording", False):
         on_press.is_recording = True
         start_recording()
 
 def on_release(key):
-    if key == keyboard.Key.space and getattr(on_press, "is_recording", False):
+    if key == keyboard.Key.ctrl_l and getattr(on_press, "is_recording", False):
         on_press.is_recording = False
         audio_np = stop_recording()
         if audio_np is not None:
@@ -602,7 +645,7 @@ if __name__ == "__main__":
     for i, cmd in enumerate(COMMAND_TOKENS, 1):
         print(f"  {i:2d}. {cmd}")
     print("=" * 50)
-    print("Hold SPACE to record. Release to classify and execute. Press ESC to quit.")
+    print("Hold CTRL to record. Release to classify and execute. Press ESC to quit.")
     print(f"Audio backend: {AUDIO_BACKEND}")
     
     if AUDIO_BACKEND == "ffmpeg":
