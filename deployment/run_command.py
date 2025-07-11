@@ -388,10 +388,10 @@ def volume_up():
     try:
         # Linux with ALSA
         if os.system("which amixer > /dev/null 2>&1") == 0:
-            os.system("amixer -D pulse sset Master 5%+ 2>/dev/null || amixer sset Master 5%+")
+            os.system("amixer -D pulse sset Master 30%+ 2>/dev/null || amixer sset Master 30%+")
         # macOS
         elif os.system("which osascript > /dev/null 2>&1") == 0:
-            os.system("""osascript -e 'set volume output volume (output volume of (get volume settings) + 10)'""")
+            os.system("""osascript -e 'set volume output volume (output volume of (get volume settings) + 30)'""")
         else:
             print("Volume control not implemented for this system")
     except Exception as e:
@@ -403,10 +403,10 @@ def volume_down():
     try:
         # Linux with ALSA
         if os.system("which amixer > /dev/null 2>&1") == 0:
-            os.system("amixer -D pulse sset Master 5%- 2>/dev/null || amixer sset Master 5%-")
+            os.system("amixer -D pulse sset Master 30%- 2>/dev/null || amixer sset Master 30%-")
         # macOS
         elif os.system("which osascript > /dev/null 2>&1") == 0:
-            os.system("""osascript -e 'set volume output volume (output volume of (get volume settings) - 10)'""")
+            os.system("""osascript -e 'set volume output volume (output volume of (get volume settings) - 30)'""")
         else:
             print("Volume control not implemented for this system")
     except Exception as e:
