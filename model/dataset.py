@@ -9,18 +9,12 @@ import pandas as pd
 from typing import Optional
 
 
-def load_from_hf_voice_commands():
-    ds = load_dataset("ntkuhn/mlx_voice_commands_mixed", split="train")   # 1. pull dataset
-    df = ds.to_pandas()                                                   # 2. convert to DataFrame
-    df["audio_path"]  = df["audio"].apply(lambda x: x["path"])            # 3. extract cached wav path
-    return df[["audio_path", "class_label"]]
-
 class AudioDataset(Dataset):
   """
   Simple dataset that reads .wav files and extracts labels from filenames.
   Assumes files named like someaudio_classX.wav where X is 1..NUM_CLASSES.
   """
-  def __init__(self, data_file: Path, processor: WhisperProcessor, label_map: dict, max_len: Optional[int] = None, from_hf: bool = False):
+  def __init__(self, data_file: Path, processor: WhisperProcessor, label_map: dict, max_len: Optional[int] = None):
 
     if data_file is None:
         data_file = Path(__file__).resolve().parent.parent / "audio_dataset.csv"
@@ -29,10 +23,7 @@ class AudioDataset(Dataset):
 
     # load data
     
-    if from_hf:
-      self.data = load_from_hf_voice_commands()
-    else:
-      self.data = pd.read_csv(data_file)
+    self.data = pd.read_csv(data_file)
 
     if max_len is not None:
       self.data = self.data.iloc[:max_len]  # limit to max_len rows
@@ -43,14 +34,14 @@ class AudioDataset(Dataset):
 
     self.unique_labels = self.labels.unique()
     self.num_classes   = len(self.unique_labels)
-    # validate audio files unless from_hf
-    if not from_hf:
-      self._validate_audio_files()
+    # validate audio files
+    self._validate_audio_files()
 
   def __len__(self) -> int:
     return len(self.filenames)
 
   def __getitem__(self, idx: int) -> dict:
+
     file_path = self.filenames[idx]
     label     = self.labels[idx]
     # Convert string label to integer index
@@ -84,6 +75,46 @@ class AudioDataset(Dataset):
         )
     
     print(f"✅ All {len(self.data)} audio files exist")
+
+
+
+class AudioHFDataset(Dataset):
+  """
+  Dataset that loads audio files from the HF dataset.
+  """
+  def __init__(self, processor: WhisperProcessor, label_map: dict, max_len: Optional[int] = None):
+    
+    # Load the HF dataset with audio already decoded
+    if max_len is not None:
+        self.ds = load_dataset("ntkuhn/mlx_voice_commands_mixed", split=f"train[:{max_len}]")
+    else:
+        self.ds = load_dataset("ntkuhn/mlx_voice_commands_mixed", split="train")
+    
+    self.processor = processor
+    self.label_map = label_map
+    self.num_classes = len(label_map)
+
+
+  def __len__(self) -> int:
+    return len(self.ds)
+
+  def __getitem__(self, idx: int) -> dict:
+    item = self.ds[idx]
+    # Extract the decoded audio array (HF datasets provide this automatically)
+    speech_array = item["audio"]["array"]
+    sampling_rate = item["audio"]["sampling_rate"]
+    label = item["class_label"]
+    
+    # Convert string label to integer index
+    label_idx = self.label_map[label]
+    
+    # Preprocess to log-Mel features (same as AudioDataset)
+    inputs = self.processor(speech_array, sampling_rate=sampling_rate, return_tensors="pt")
+    
+    return {
+        "input_features": inputs.input_features.squeeze(0), 
+        "label": torch.tensor(label_idx, dtype=torch.long)
+    }
 
 class DummyDataset(Dataset):
   """

@@ -23,7 +23,7 @@ load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from model.dataset import AudioDataset, DummyDataset
+from model.dataset import AudioDataset, DummyDataset, AudioHFDataset
 from model.model import WhisperEncoderClassifier
 
 # Global constants
@@ -84,8 +84,10 @@ def train(data_dir: str, model_dir: str, use_dummy: bool = False, from_hf: bool 
     # use DummyDataset for debugging without real files
     dataset = DummyDataset(processor, n_items=DUMMY_ITEMS, num_classes=len(classes))
     print("⚙️ Using dummy dataset with random data")
+  elif from_hf:
+    dataset = AudioHFDataset(processor, label_to_idx)
   else:
-    dataset = AudioDataset(data_file, processor, label_to_idx, from_hf=from_hf)
+    dataset = AudioDataset(data_file, processor, label_to_idx)
   loader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=True)
 
   # build model, loss, optimizer
