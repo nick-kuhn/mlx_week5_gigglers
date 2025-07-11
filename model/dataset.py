@@ -1,17 +1,27 @@
 from pathlib import Path
 from torch.utils.data import Dataset
+from datasets import load_dataset
 from transformers import WhisperProcessor
 import torch
 import torchaudio
 import random
 import pandas as pd
+from typing import Optional
+
+
+def load_from_hf_voice_commands():
+    ds = load_dataset("ntkuhn/mlx_voice_commands_mixed", split="train")   # 1. pull dataset
+    df = ds.to_pandas()                                                   # 2. convert to DataFrame
+    df["audio_path"]  = df["audio"].apply(lambda x: x["path"])            # 3. extract cached wav path
+    df["class_label"] = df["command_token"]                               # 4. rename for consistency
+    return df[["audio_path", "class_label"]]
 
 class AudioDataset(Dataset):
   """
   Simple dataset that reads .wav files and extracts labels from filenames.
   Assumes files named like someaudio_classX.wav where X is 1..NUM_CLASSES.
   """
-  def __init__(self, data_file: Path, processor: WhisperProcessor, label_map: dict, max_len: int = 2300):
+  def __init__(self, data_file: Path, processor: WhisperProcessor, label_map: dict, max_len: Optional[int] = None, from_hf: bool = False):
 
     if data_file is None:
         data_file = Path(__file__).resolve().parent.parent / "audio_dataset.csv"
@@ -19,7 +29,14 @@ class AudioDataset(Dataset):
         raise FileNotFoundError(f"Data file {data_file} not found")
 
     # load data
-    self.data = pd.read_csv(data_file).iloc[:max_len]  # limit to max_len rows
+    
+    if from_hf:
+      self.data = load_from_hf()
+    else:
+      self.data = pd.read_csv(data_file)
+
+    if max_len is not None:
+      self.data = self.data.iloc[:max_len]  # limit to max_len rows
     self.filenames  = self.data["audio_path"]
     self.labels     = self.data["class_label"]
     self.processor  = processor

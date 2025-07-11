@@ -50,7 +50,7 @@ import os
 print(f'Found {len(os.listdir(DATA_DIR))} audio files')  # Ensure the data directory exists
 
 
-def train(data_dir: str, model_dir: str, use_dummy: bool = False, epochs: int = EPOCHS):
+def train(data_dir: str, model_dir: str, use_dummy: bool = False, from_hf: bool = False, epochs: int = EPOCHS):
   # Initialize wandb
   wandb.init(
       project="voice-command-classifier",
@@ -65,7 +65,7 @@ def train(data_dir: str, model_dir: str, use_dummy: bool = False, epochs: int = 
       }
   )
   
-  # Discover all classes by filename
+
   data_file = data_dir.parent.parent / "audio_dataset.csv"
   df = pd.read_csv(data_file)
   classes     = sorted(df["class_label"].unique())
@@ -82,7 +82,7 @@ def train(data_dir: str, model_dir: str, use_dummy: bool = False, epochs: int = 
     dataset = DummyDataset(processor, n_items=DUMMY_ITEMS, num_classes=len(classes))
     print("⚙️ Using dummy dataset with random data")
   else:
-    dataset = AudioDataset(data_file, processor, label_to_idx)
+    dataset = AudioDataset(data_file, processor, label_to_idx, from_hf=from_hf)
   loader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=True)
 
   # build model, loss, optimizer
@@ -358,9 +358,13 @@ def calculate_validation_loss(model, processor, classes, label_to_idx, criterion
     return total_loss / num_samples if num_samples > 0 else 0.0
 
 def main():
-  # detect --dummy flag for debug
-  use_dummy = "--dummy" in sys.argv
-  train(DATA_DIR, MODEL_DIR, use_dummy)
+  parser = argparse.ArgumentParser()
+  parser.add_argument("--dummy", action="store_true", help="Use dummy dataset")
+  parser.add_argument("--hf", action="store_true", help="Use HF dataset")
+  args = parser.parse_args()
+  use_dummy = args.dummy
+  from_hf = args.hf
+  train(DATA_DIR, MODEL_DIR, use_dummy, from_hf)
 
 if __name__ == "__main__":
   main()
