@@ -1,0 +1,152 @@
+
+================================================================================
+CONFUSION MATRIX - 2025-07-11 12:55:19
+Epoch: 1
+Device: cuda
+================================================================================
+
+Confusion Matrix (True vs Predicted):
+Rows = True Classes, Columns = Predicted Classes
+
+True\Pred   <close_b  <google>  <maximiz  <minimiz  <mute>    <no_acti  <open_br  <open_no  <play_mu  <stop_mu  <switch_  <volume_  <volume_  
+----------------------------------------------------------------------------------------------------------------------------------------------
+<close_bro  0         0         0         0         0         0         0         0         0         ✗2        0         ✗1        0         
+<google>    0         0         0         0         0         0         0         0         0         ✗3        0         ✗3        0         
+<maximize_  0         0         0         0         0         0         0         0         0         ✗1        0         ✗2        0         
+<minimize_  0         0         0         0         0         0         0         0         0         0         0         ✗3        0         
+<mute>      0         0         0         0         0         0         0         0         0         ✗2        0         ✗4        0         
+<no_action  0         0         0         0         0         0         0         0         0         ✗4        0         ✗2        0         
+<open_brow  0         0         0         0         0         0         0         0         0         ✗5        0         ✗3        0         
+<open_note  0         0         0         0         0         0         0         0         0         ✗2        0         ✗2        0         
+<play_musi  0         0         0         0         0         0         0         0         0         ✗3        0         ✗4        0         
+<stop_musi  0         0         0         0         0         0         0         0         0         ✓4        0         ✗2        0         
+<switch_wi  0         0         0         0         0         0         0         0         0         ✗6        0         ✗4        0         
+<volume_do  0         0         0         0         0         0         0         0         0         ✗3        0         ✓4        0         
+<volume_up  0         0         0         0         0         0         0         0         0         ✗2        0         ✗2        0         
+
+Summary:
+Total samples: 73
+Correct predictions: 8
+Accuracy: 0.110
+
+Most Confused Class Pairs:
+  <switch_window> → <stop_music>: 6 times
+  <open_browser> → <stop_music>: 5 times
+  <mute> → <volume_down>: 4 times
+  <no_action> → <stop_music>: 4 times
+  <play_music> → <volume_down>: 4 times
+
+
+================================================================================
+CONFUSION MATRIX - 2025-07-11 12:56:08
+Epoch: 2
+Device: cuda
+================================================================================
+
+Confusion Matrix (True vs Predicted):
+Rows = True Classes, Columns = Predicted Classes
+
+True\Pred   <close_b  <google>  <maximiz  <minimiz  <mute>    <no_acti  <open_br  <open_no  <play_mu  <stop_mu  <switch_  <volume_  <volume_  
+----------------------------------------------------------------------------------------------------------------------------------------------
+<close_bro  0         0         0         0         0         0         0         0         0         0         0         ✗3        0         
+<google>    0         0         0         0         ✗4        0         0         0         0         0         0         ✗2        0         
+<maximize_  0         0         0         0         ✗2        0         0         0         0         0         0         ✗1        0         
+<minimize_  0         0         0         0         0         ✗1        0         0         0         0         0         ✗2        0         
+<mute>      0         0         0         0         ✓2        0         0         0         0         0         0         ✗4        0         
+<no_action  0         0         0         0         ✗4        ✓1        0         0         0         0         0         ✗1        0         
+<open_brow  0         0         0         0         ✗2        0         0         0         0         0         0         ✗6        0         
+<open_note  0         0         0         0         ✗1        0         0         0         0         0         0         ✗3        0         
+<play_musi  0         0         0         0         ✗4        0         0         0         0         0         0         ✗3        0         
+<stop_musi  0         0         0         0         ✗4        0         0         0         0         0         0         ✗2        0         
+<switch_wi  0         0         0         0         ✗7        0         0         0         0         0         0         ✗3        0         
+<volume_do  0         0         0         0         0         0         0         0         0         0         0         ✓7        0         
+<volume_up  0         0         0         0         ✗1        0         0         0         0         0         0         ✗3        0         
+
+Summary:
+Total samples: 73
+Correct predictions: 10
+Accuracy: 0.137
+
+Most Confused Class Pairs:
+  <switch_window> → <mute>: 7 times
+  <open_browser> → <volume_down>: 6 times
+  <google> → <mute>: 4 times
+  <mute> → <volume_down>: 4 times
+  <no_action> → <mute>: 4 times
+
+
+================================================================================
+CONFUSION MATRIX - 2025-07-11 12:56:56
+Epoch: 3
+Device: cuda
+================================================================================
+
+Confusion Matrix (True vs Predicted):
+Rows = True Classes, Columns = Predicted Classes
+
+True\Pred   <close_b  <google>  <maximiz  <minimiz  <mute>    <no_acti  <open_br  <open_no  <play_mu  <stop_mu  <switch_  <volume_  <volume_  
+----------------------------------------------------------------------------------------------------------------------------------------------
+<close_bro  ✓2        0         0         0         0         0         0         0         0         0         0         ✗1        0         
+<google>    0         ✓3        ✗1        0         0         0         ✗1        0         0         0         0         ✗1        0         
+<maximize_  0         0         ✓2        0         0         0         0         0         0         0         0         ✗1        0         
+<minimize_  0         0         ✗1        0         0         0         0         0         0         0         0         ✗2        0         
+<mute>      0         0         0         0         0         0         0         0         0         0         0         ✗6        0         
+<no_action  0         0         0         0         ✗1        ✓1        0         ✗1        0         0         0         ✗2        ✗1        
+<open_brow  ✗4        0         0         0         0         0         ✓3        0         0         0         0         ✗1        0         
+<open_note  0         0         0         0         0         0         0         ✓1        0         0         0         ✗3        0         
+<play_musi  0         0         0         0         0         0         0         0         ✓3        ✗1        0         ✗3        0         
+<stop_musi  0         0         0         0         0         0         0         0         ✗3        ✓1        0         ✗2        0         
+<switch_wi  0         0         ✗4        0         0         0         0         0         0         0         ✓3        ✗3        0         
+<volume_do  0         0         0         0         0         0         0         0         0         0         0         ✓7        0         
+<volume_up  0         0         0         0         0         0         0         0         0         0         0         ✗3        ✓1        
+
+Summary:
+Total samples: 73
+Correct predictions: 27
+Accuracy: 0.370
+
+Most Confused Class Pairs:
+  <mute> → <volume_down>: 6 times
+  <open_browser> → <close_browser>: 4 times
+  <switch_window> → <maximize_window>: 4 times
+  <open_notepad> → <volume_down>: 3 times
+  <play_music> → <volume_down>: 3 times
+
+
+================================================================================
+CONFUSION MATRIX - 2025-07-11 12:57:45
+Epoch: 4
+Device: cuda
+================================================================================
+
+Confusion Matrix (True vs Predicted):
+Rows = True Classes, Columns = Predicted Classes
+
+True\Pred   <close_b  <google>  <maximiz  <minimiz  <mute>    <no_acti  <open_br  <open_no  <play_mu  <stop_mu  <switch_  <volume_  <volume_  
+----------------------------------------------------------------------------------------------------------------------------------------------
+<close_bro  ✓2        0         0         0         0         0         0         0         0         0         0         ✗1        0         
+<google>    0         ✓4        0         0         0         0         0         0         0         ✗1        0         ✗1        0         
+<maximize_  0         0         ✓2        0         0         0         0         0         0         0         0         ✗1        0         
+<minimize_  0         0         ✗1        0         0         0         0         0         0         0         0         ✗2        0         
+<mute>      0         0         0         0         ✓1        0         0         0         0         0         0         ✗5        0         
+<no_action  0         0         0         0         ✗2        ✓1        0         ✗1        ✗1        0         0         ✗1        0         
+<open_brow  ✗6        0         0         0         0         0         ✓1        0         0         0         0         ✗1        0         
+<open_note  0         0         0         0         0         0         0         ✓2        0         0         0         ✗2        0         
+<play_musi  0         0         0         0         0         0         0         0         ✓1        ✗3        0         ✗3        0         
+<stop_musi  0         0         0         0         0         0         0         0         0         ✓4        0         ✗2        0         
+<switch_wi  0         0         ✗3        0         0         0         0         0         0         0         ✓4        ✗3        0         
+<volume_do  0         0         0         0         0         0         0         0         0         0         0         ✓6        ✗1        
+<volume_up  0         0         0         0         0         0         0         0         0         0         0         ✗3        ✓1        
+
+Summary:
+Total samples: 73
+Correct predictions: 29
+Accuracy: 0.397
+
+Most Confused Class Pairs:
+  <open_browser> → <close_browser>: 6 times
+  <mute> → <volume_down>: 5 times
+  <play_music> → <stop_music>: 3 times
+  <play_music> → <volume_down>: 3 times
+  <switch_window> → <maximize_window>: 3 times
+

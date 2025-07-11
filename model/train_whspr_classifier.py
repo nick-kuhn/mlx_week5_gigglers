@@ -1,6 +1,11 @@
-# Set the audio backend for HuggingFace datasets BEFORE any other imports
-# to prevent it from defaulting to torchcodec. This is crucial on systems
-# (like Windows) where torchcodec's dependencies might be missing.
+"""Set the audio backend for HuggingFace datasets BEFORE any other imports
+to prevent it from defaulting to torchcodec. This is crucial on systems
+(like Windows) where torchcodec's dependencies might be missing.
+Run with: 
+python model/train_whspr_classifier.py --hf
+"""
+
+
 import soundfile as sf
 import datasets
 datasets.config.AUDIO_DECODE_BACKEND = "soundfile"
@@ -14,7 +19,7 @@ import torch
 from torch import nn
 from torch.utils.data import DataLoader, WeightedRandomSampler
 from transformers import WhisperProcessor
-from sklearn.metrics import f1_score
+from sklearn.metrics import f1_score, confusion_matrix
 import numpy as np
 from tqdm import tqdm
 import wandb
@@ -232,7 +237,7 @@ def train(data_dir: str, model_dir: str, use_dummy: bool = False, from_hf: bool 
     train_acc = acc
     
     # Run validation at the end of each epoch
-    val_acc, val_f1, val_loss = run_validation(model, criterion, val_loader, DEVICE)
+    val_acc, val_f1, val_loss = run_validation(model, criterion, val_loader, DEVICE, classes, label_to_idx, epoch)
     
     # Log metrics to wandb
     wandb.log({
@@ -283,7 +288,7 @@ def train(data_dir: str, model_dir: str, use_dummy: bool = False, from_hf: bool 
   wandb.finish()
 
 ########## Functions for validation 
-def run_validation(model, criterion, val_loader, device):
+def run_validation(model, criterion, val_loader, device, classes=None, label_to_idx=None, epoch=None):
     """Run validation, calculating accuracy, F1, and loss in a single pass."""
     print("\n🔍 Running validation...")
     model.eval()
@@ -324,7 +329,117 @@ def run_validation(model, criterion, val_loader, device):
     print(f"   Loss: {avg_loss:.4f}")
     print(f"   Samples: {num_samples}")
     
+    # Print class distribution if classes are provided
+    if classes is not None and len(all_true_labels) > 0:
+        print(f"\n📈 Class Distribution:")
+        
+        # Count true and predicted labels
+        true_counts = np.bincount(all_true_labels, minlength=len(classes))
+        pred_counts = np.bincount(all_pred_labels, minlength=len(classes))
+        
+        print(f"{'Class':<25} {'True Count':<12} {'Pred Count':<12} {'Difference':<12}")
+        print("-" * 65)
+        
+        for i, class_name in enumerate(classes):
+            true_count = true_counts[i]
+            pred_count = pred_counts[i]
+            diff = pred_count - true_count
+            diff_str = f"+{diff}" if diff > 0 else str(diff)
+            print(f"{class_name:<25} {true_count:<12} {pred_count:<12} {diff_str:<12}")
+        
+        print("-" * 65)
+        print(f"{'TOTAL':<25} {sum(true_counts):<12} {sum(pred_counts):<12} {sum(pred_counts) - sum(true_counts):<12}")
+        
+        # Generate and save confusion matrix
+        cm = confusion_matrix(all_true_labels, all_pred_labels, labels=range(len(classes)))
+        save_confusion_matrix(cm, classes, device, epoch)
+    
     return accuracy, f1, avg_loss
+
+def save_confusion_matrix(cm, classes, device, epoch=None):
+    """Save confusion matrix to file with proper formatting"""
+    predictions_file = BASE_DIR / "model" / "confusion_matrix.txt"
+    
+    # Create model directory if it doesn't exist
+    predictions_file.parent.mkdir(parents=True, exist_ok=True)
+    
+    from datetime import datetime
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    
+    with open(predictions_file, 'a', encoding='utf-8') as f:
+        f.write(f"\n{'='*80}\n")
+        f.write(f"CONFUSION MATRIX - {timestamp}\n")
+        if epoch:
+            f.write(f"Epoch: {epoch}\n")
+        f.write(f"Device: {device}\n")
+        f.write(f"{'='*80}\n\n")
+        
+        # Print confusion matrix header
+        f.write("Confusion Matrix (True vs Predicted):\n")
+        f.write("Rows = True Classes, Columns = Predicted Classes\n\n")
+        
+        # Create header with class names (truncated for readability)
+        class_abbrevs = [cls[:8] for cls in classes]  # Truncate to 8 chars
+        header = "True\\Pred".ljust(12)
+        for abbrev in class_abbrevs:
+            header += abbrev.ljust(10)
+        f.write(header + "\n")
+        f.write("-" * (12 + len(class_abbrevs) * 10) + "\n")
+        
+        # Print confusion matrix rows
+        for i, true_class in enumerate(classes):
+            row = true_class[:10].ljust(12)  # Truncate class name
+            for j in range(len(classes)):
+                count = cm[i, j]
+                if i == j and count > 0:  # Correct predictions
+                    row += f"✓{count}".ljust(10)
+                elif count > 0:  # Incorrect predictions
+                    row += f"✗{count}".ljust(10)
+                else:  # No predictions
+                    row += "0".ljust(10)
+            f.write(row + "\n")
+        
+        # Add summary statistics
+        f.write(f"\nSummary:\n")
+        f.write(f"Total samples: {cm.sum()}\n")
+        f.write(f"Correct predictions: {np.trace(cm)}\n")
+        f.write(f"Accuracy: {np.trace(cm) / cm.sum():.3f}\n")
+        
+        # Most confused pairs
+        f.write(f"\nMost Confused Class Pairs:\n")
+        confused_pairs = []
+        for i in range(len(classes)):
+            for j in range(len(classes)):
+                if i != j and cm[i, j] > 0:
+                    confused_pairs.append((cm[i, j], classes[i], classes[j]))
+        
+        confused_pairs.sort(reverse=True, key=lambda x: x[0])
+        for count, true_cls, pred_cls in confused_pairs[:5]:  # Top 5 confusions
+            f.write(f"  {true_cls} → {pred_cls}: {count} times\n")
+        
+        f.write(f"\n")
+    
+    print(f"📄 Confusion matrix saved to: {predictions_file}")
+    
+    # Also print a simplified version to console
+    print(f"\n🔀 Confusion Matrix (✓=correct, ✗=incorrect):")
+    print("True\\Pred".ljust(12), end="")
+    for cls in classes:
+        print(cls[:8].ljust(10), end="")
+    print()
+    print("-" * (12 + len(classes) * 10))
+    
+    for i, true_class in enumerate(classes):
+        print(true_class[:10].ljust(12), end="")
+        for j in range(len(classes)):
+            count = cm[i, j]
+            if i == j and count > 0:
+                print(f"✓{count}".ljust(10), end="")
+            elif count > 0:
+                print(f"✗{count}".ljust(10), end="")
+            else:
+                print("0".ljust(10), end="")
+        print()
 
 def main():
   parser = argparse.ArgumentParser()

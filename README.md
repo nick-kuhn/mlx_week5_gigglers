@@ -37,7 +37,7 @@ From the project root (`~/mlx/week5/mlx_week5_gigglers/`) run:
 
 ```bash
 uv venv .venv --python=python3.10
-source .venv/bin/activate  # prompt becomes (.venv)
+uv venv .venv --python=python3.10
 ```
 
 ---
