@@ -88,6 +88,7 @@ def train(data_dir: str, model_dir: str, use_dummy: bool = False, from_hf: bool 
     dataset = AudioHFDataset(processor, label_to_idx)
   else:
     dataset = AudioDataset(data_file, processor, label_to_idx)
+  print(f"Using dataset: {type(dataset)}")
   loader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=True)
 
   # build model, loss, optimizer
