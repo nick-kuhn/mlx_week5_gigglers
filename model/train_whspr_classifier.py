@@ -300,6 +300,10 @@ def run_validation(model, criterion, val_loader, device, classes=None, label_to_
     all_pred_labels = []
     total_loss = 0.0
     
+    # Track misclassified examples
+    misclassified_examples = []
+    batch_idx = 0
+    
     with torch.no_grad():
         for batch in val_loader:
             inputs = batch["input_features"].to(device, non_blocking=True)
@@ -314,8 +318,32 @@ def run_validation(model, criterion, val_loader, device, classes=None, label_to_
             
             # For metrics
             predicted_indices = logits.argmax(dim=1)
-            all_true_labels.extend(labels.cpu().numpy())
-            all_pred_labels.extend(predicted_indices.cpu().numpy())
+            batch_true_labels = labels.cpu().numpy()
+            batch_pred_labels = predicted_indices.cpu().numpy()
+            
+            # Track misclassifications
+            for i in range(len(batch_true_labels)):
+                sample_idx = batch_idx * val_loader.batch_size + i
+                true_label = batch_true_labels[i]
+                pred_label = batch_pred_labels[i]
+                
+                if true_label != pred_label:
+                    # Get additional info if available
+                    sample_type = batch.get("sample_type", ["unknown"] * len(batch_true_labels))[i]
+                    
+                    misclassified_examples.append({
+                        'sample_idx': sample_idx,
+                        'true_label': true_label,
+                        'pred_label': pred_label,
+                        'true_class': classes[true_label] if classes else f"class_{true_label}",
+                        'pred_class': classes[pred_label] if classes else f"class_{pred_label}",
+                        'sample_type': sample_type,
+                        'confidence': torch.softmax(logits[i], dim=0)[pred_label].item()
+                    })
+            
+            all_true_labels.extend(batch_true_labels)
+            all_pred_labels.extend(batch_pred_labels)
+            batch_idx += 1
             
     # Calculate final metrics
     num_samples = len(all_true_labels)
@@ -328,6 +356,26 @@ def run_validation(model, criterion, val_loader, device, classes=None, label_to_
     print(f"   F1 Score: {f1:.3f}")
     print(f"   Loss: {avg_loss:.4f}")
     print(f"   Samples: {num_samples}")
+    print(f"   Misclassified: {len(misclassified_examples)}")
+    
+    # Print a few misclassified examples
+    if misclassified_examples:
+        print(f"\n🚨 Sample Misclassifications (showing up to 5):")
+        print(f"{'ID':<6} {'True':<20} {'Predicted':<20} {'Type':<12} {'Confidence':<10}")
+        print("-" * 75)
+        
+        # Show up to 5 examples, sorted by confidence (lowest first - least confident predictions)
+        sorted_examples = sorted(misclassified_examples, key=lambda x: x['confidence'])[:5]
+        
+        for example in sorted_examples:
+            print(f"{example['sample_idx']:<6} "
+                  f"{example['true_class']:<20} "
+                  f"{example['pred_class']:<20} "
+                  f"{example['sample_type']:<12} "
+                  f"{example['confidence']:.3f}")
+        
+        if len(misclassified_examples) > 5:
+            print(f"... and {len(misclassified_examples) - 5} more misclassifications")
     
     # Print class distribution if classes are provided
     if classes is not None and len(all_true_labels) > 0:
