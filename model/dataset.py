@@ -1,6 +1,6 @@
 from pathlib import Path
 from torch.utils.data import Dataset
-from datasets import load_dataset
+from datasets import load_dataset, Audio
 from transformers import WhisperProcessor
 import torch
 import torchaudio
@@ -80,15 +80,18 @@ class AudioDataset(Dataset):
 
 class AudioHFDataset(Dataset):
   """
-  Dataset that loads audio files from the HF dataset.
+  Dataset that loads audio files from the HF dataset using soundfile backend.
   """
   def __init__(self, processor: WhisperProcessor, label_map: dict, max_len: Optional[int] = None):
     
-    # Load the HF dataset with audio already decoded
+    # Load the HF dataset
     if max_len is not None:
         self.ds = load_dataset("ntkuhn/mlx_voice_commands_mixed", split=f"train[:{max_len}]")
     else:
         self.ds = load_dataset("ntkuhn/mlx_voice_commands_mixed", split="train")
+    
+    # Force soundfile backend instead of torchcodec to avoid FFmpeg4 bug
+    self.ds = self.ds.cast_column("audio", Audio(decode=True))
     
     self.processor = processor
     self.label_map = label_map
