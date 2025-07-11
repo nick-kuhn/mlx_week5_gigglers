@@ -48,7 +48,7 @@ print(f"Using device: {DEVICE}, CUDA version: {torch.version.cuda}, GPU count: {
 
 import os
 
-try
+try:
    print(f'Found {len(os.listdir(DATA_DIR))} audio files')  # Ensure the data directory exists
 except FileNotFoundError:
     print(f"Data directory not found: {DATA_DIR}, proceeding anyway.")
