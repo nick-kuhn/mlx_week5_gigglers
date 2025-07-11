@@ -43,8 +43,9 @@ class AudioDataset(Dataset):
 
     self.unique_labels = self.labels.unique()
     self.num_classes   = len(self.unique_labels)
-
-    self._validate_audio_files()
+    # validate audio files unless from_hf
+    if not from_hf:
+      self._validate_audio_files()
 
   def __len__(self) -> int:
     return len(self.filenames)
